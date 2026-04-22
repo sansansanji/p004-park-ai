@@ -1,0 +1,71 @@
+# H5网页入口配置
+
+## 配置说明
+# H5网页入口 - 游客通过扫描二维码访问的网页端入口
+
+h5_web:
+  # 是否启用
+  enabled: true
+  
+  # 网页标题
+  title: "园区AI助手"
+  
+  # 描述
+  description: "智能导览，优惠信息一键查询"
+  
+  # 图标
+  favicon: "/assets/favicon.ico"
+  
+  # 主题色
+  theme_color: "#3498db"
+  
+  # 背景色
+  background_color: "#f5f7fa"
+
+## 页面配置
+pages:
+  # 首页
+  home:
+    # 是否显示欢迎语
+    show_welcome: true
+    
+    # 是否显示快捷操作
+    show_quick_actions: true
+    
+    # 是否显示常见问题
+    show_faq: true
+    
+  # 地图页
+  map:
+    # 默认地图服务商
+    provider: "tianditu"
+    
+    # 默认缩放级别
+    default_zoom: 16
+    
+    # 是否显示商户标注
+    show_merchants: true
+    
+  # 优惠页
+  coupons:
+    # 每页显示数量
+    page_size: 10
+    
+    # 是否显示使用说明
+    show_usage: true
+
+## 分享配置
+share:
+  # 分享标题
+  title: "园区AI助手 - 您的智能导游"
+  
+  # 分享描述
+  desc: "扫码进入，享园区优惠"
+  
+  # 分享图标
+  icon: "/assets/share-icon.png"
+
+## 部署说明
+# 1. 将H5页面部署到服务器
+# 2. 生成二维码，二维码内容指向H5页面URL
+# 3. 在园区入口张贴二维码供游客扫描
