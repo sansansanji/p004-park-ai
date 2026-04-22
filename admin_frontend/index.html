@@ -1,0 +1,3725 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>园区AI助手 · 管理后台</title>
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/element-plus/2.6.0/index.css">
+<script src="https://cdn.bootcdn.net/ajax/libs/vue/3.4.21/vue.global.prod.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/element-plus/2.6.0/index.full.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/element-plus-icons-vue/2.3.1/index.iife.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; }
+
+/* 登录页 */
+.login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.login-box { background: #fff; border-radius: 16px; padding: 48px 40px; width: 400px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+.login-logo { text-align: center; margin-bottom: 32px; }
+.login-logo h1 { font-size: 22px; color: #303133; margin-top: 12px; }
+.login-logo p { color: #909399; font-size: 13px; margin-top: 4px; }
+
+/* 主布局 */
+.layout { display: flex; height: 100vh; }
+.sidebar { width: 220px; background: #001529; color: #fff; display: flex; flex-direction: column;
+  flex-shrink: 0; transition: width 0.3s; overflow: hidden; }
+.sidebar.collapsed { width: 64px; }
+.sidebar-header { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.1);
+  display: flex; align-items: center; gap: 10px; }
+.sidebar-header .logo-icon { font-size: 24px; flex-shrink: 0; }
+.sidebar-header .logo-text { font-size: 15px; font-weight: 600; white-space: nowrap;
+  overflow: hidden; }
+.nav-menu { flex: 1; overflow-y: auto; padding: 8px 0; }
+.nav-group { padding: 12px 20px 4px; font-size: 11px; color: rgba(255,255,255,0.35);
+  letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; overflow: hidden; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; cursor: pointer;
+  color: rgba(255,255,255,0.65); font-size: 14px; transition: all 0.2s; white-space: nowrap; }
+.nav-item:hover { color: #fff; background: rgba(255,255,255,0.08); }
+.nav-item.active { color: #fff; background: #1890ff; border-right: 3px solid #40a9ff; }
+.nav-item .icon { font-size: 16px; flex-shrink: 0; }
+.nav-item .label { overflow: hidden; }
+
+/* 主内容 */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar { background: #fff; height: 56px; display: flex; align-items: center; padding: 0 20px;
+  border-bottom: 1px solid #e8e8e8; gap: 12px; flex-shrink: 0; }
+.topbar-title { font-size: 16px; font-weight: 600; color: #303133; flex: 1; }
+.content { flex: 1; overflow-y: auto; padding: 20px; }
+
+/* 卡片 */
+.card { background: #fff; border-radius: 8px; padding: 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.card-title { font-size: 15px; font-weight: 600; color: #303133; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px; }
+
+/* 统计卡片 - 飞书/钉钉风格 */
+.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+.stat-card { background: #fff; border-radius: 12px; padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 16px;
+  transition: all 0.3s; border: 1px solid #f0f0f0; }
+.stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+.stat-icon { width: 56px; height: 56px; border-radius: 14px; display: flex;
+  align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; }
+.stat-icon.green { background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%); }
+.stat-icon.orange { background: linear-gradient(135deg, #fa8c16 0%, #d46b08 100%); }
+.stat-icon.blue { background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%); }
+.stat-info .label { font-size: 13px; color: #8c8c8c; margin-bottom: 4px; }
+.stat-info .value { font-size: 32px; font-weight: 700; color: #262626; line-height: 1.2; }
+.stat-info .trend { font-size: 12px; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+.trend-up { color: #52c41a; }
+.trend-down { color: #f5222d; }
+
+/* 会员管理专用样式 */
+.member-filter-bar { background: #fff; border-radius: 12px; padding: 16px 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 16px; display: flex;
+  align-items: center; gap: 12px; flex-wrap: wrap; }
+.member-filter-bar .filter-group { display: flex; align-items: center; gap: 8px; }
+.member-filter-bar .filter-label { font-size: 13px; color: #8c8c8c; }
+
+.member-table-card { background: #fff; border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden; }
+.member-table-card .table-header { padding: 16px 20px; border-bottom: 1px solid #f0f0f0;
+  display: flex; align-items: center; justify-content: space-between; }
+.member-table-card .table-title { font-size: 15px; font-weight: 600; color: #262626;
+  display: flex; align-items: center; gap: 8px; }
+.member-table-card .table-title .count { font-size: 12px; color: #8c8c8c; font-weight: normal; }
+
+.member-avatar { display: flex; align-items: center; gap: 12px; }
+.member-avatar .avatar-img { width: 40px; height: 40px; border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 16px; font-weight: 600; }
+.member-avatar .avatar-info { display: flex; flex-direction: column; }
+.member-avatar .avatar-name { font-size: 14px; font-weight: 500; color: #262626; }
+.member-avatar .avatar-phone { font-size: 12px; color: #8c8c8c; }
+
+.member-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.member-tag { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+.member-tag.level-normal { background: #e6f7ff; color: #1890ff; }
+.member-tag.level-vip { background: #fff7e6; color: #fa8c16; }
+.member-tag.level-svip { background: #fff0f6; color: #eb2f96; }
+.member-tag.source-mp { background: #f6ffed; color: #52c41a; }
+.member-tag.source-wxwork { background: #e6f7ff; color: #1890ff; }
+.member-tag.source-manual { background: #f5f5f5; color: #595959; }
+.member-tag.bind-yes { background: #f6ffed; color: #52c41a; }
+.member-tag.bind-no { background: #fff1f0; color: #ff4d4f; }
+
+.member-actions { display: flex; gap: 8px; }
+.member-actions .el-button { padding: 4px 12px; }
+
+.member-empty { padding: 60px 20px; text-align: center; }
+.member-empty .empty-icon { font-size: 64px; margin-bottom: 16px; }
+.member-empty .empty-title { font-size: 16px; color: #262626; margin-bottom: 8px; }
+.member-empty .empty-desc { font-size: 13px; color: #8c8c8c; margin-bottom: 24px; }
+
+/* 图表区域 */
+.chart-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 20px; }
+.chart-box { height: 280px; }
+
+/* 待处理提醒 */
+.pending-bar { background: #fff7e6; border: 1px solid #ffd591; border-radius: 8px;
+  padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+  color: #d46b08; font-size: 13px; }
+
+/* 表格操作 */
+.table-toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.table-toolbar .spacer { flex: 1; }
+
+/* 徽章 */
+.badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+.badge-normal { background: #e6f7ff; color: #1890ff; }
+.badge-vip { background: #fff7e6; color: #fa8c16; }
+.badge-svip { background: #fff0f6; color: #eb2f96; }
+.badge-mp { background: #f6ffed; color: #52c41a; }
+.badge-wxwork { background: #e6f7ff; color: #1890ff; }
+.badge-draft { background: #f5f5f5; color: #8c8c8c; }
+.badge-reviewing { background: #fff7e6; color: #fa8c16; }
+.badge-approved { background: #e6f7ff; color: #1890ff; }
+.badge-published { background: #f6ffed; color: #52c41a; }
+.badge-active { background: #f6ffed; color: #52c41a; }
+.badge-ended { background: #f5f5f5; color: #8c8c8c; }
+
+/* 商户分类徽章 */
+.badge-food { background: #fff2f0; color: #ff4d4f; }
+.badge-shop { background: #e6f7ff; color: #1890ff; }
+.badge-fun { background: #f9f0ff; color: #722ed1; }
+.badge-family { background: #fff7e6; color: #fa8c16; }
+.badge-service { background: #f6ffed; color: #52c41a; }
+.badge-edu { background: #fff0f6; color: #eb2f96; }
+.badge-fitness { background: #e6fffb; color: #13c2c2; }
+.badge-beauty { background: #fff0f6; color: #eb2f96; }
+.badge-other { background: #f5f5f5; color: #8c8c8c; }
+
+/* 欢迎语预览气泡 */
+.welcome-preview-box { background: #f5f5f5; border-radius: 12px; padding: 20px; margin-top: 12px; }
+.welcome-preview-bubble { background: #95ec69; border-radius: 8px; padding: 12px 16px; max-width: 380px;
+  font-size: 14px; line-height: 1.7; color: #262626; white-space: pre-wrap; word-break: break-word;
+  position: relative; margin-left: 44px; }
+.welcome-preview-bubble::before { content: ''; position: absolute; left: -8px; top: 12px;
+  border: 6px solid transparent; border-right-color: #95ec69; }
+.welcome-preview-avatar { width: 36px; height: 36px; border-radius: 6px; background: #07c160;
+  display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px;
+  position: absolute; left: 0; top: 0; }
+.welcome-preview-wrap { position: relative; padding-left: 44px; }
+.welcome-preview-name { font-size: 12px; color: #999; margin-bottom: 4px; margin-left: 44px; }
+
+/* 测试匹配区域 */
+.rule-test-box { background: #fafafa; border: 1px dashed #d9d9d9; border-radius: 8px; padding: 16px; margin-top: 12px; }
+.rule-test-box .test-input-row { display: flex; gap: 8px; align-items: center; }
+.rule-test-result { margin-top: 12px; }
+.rule-test-result .match-item { background: #fff; border-radius: 6px; padding: 10px 14px; margin-bottom: 8px;
+  border-left: 3px solid #52c41a; }
+.rule-test-result .match-item.no-match { border-left-color: #ff4d4f; }
+.rule-test-result .match-item .match-keyword { font-weight: 600; color: #262626; }
+.rule-test-result .match-item .match-type { font-size: 12px; color: #8c8c8c; margin-left: 8px; }
+.rule-test-result .match-item .match-reply { font-size: 13px; color: #595959; margin-top: 4px;
+  white-space: pre-wrap; word-break: break-word; }
+.rule-test-result .match-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+
+/* 联动提示 */
+.sync-hint { background: #f6ffed; border: 1px solid #b7eb8f; border-radius: 8px; padding: 12px 16px;
+  margin-top: 12px; display: flex; align-items: center; gap: 8px; color: #389e0d; font-size: 13px; }
+.sync-hint .sync-icon { font-size: 18px; }
+
+/* 规则分类标签 */
+.rule-category-tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px;
+  border-radius: 12px; font-size: 12px; }
+.rule-category-greeting { background: #e6f7ff; color: #1890ff; }
+.rule-category-info { background: #f6ffed; color: #52c41a; }
+.rule-category-nav { background: #fff7e6; color: #fa8c16; }
+.rule-category-other { background: #f5f5f5; color: #8c8c8c; }
+
+/* 响应式 */
+@media (max-width: 1200px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 768px) { .chart-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- 登录页 -->
+  <div v-if="!isLoggedIn" class="login-page">
+    <div class="login-box">
+      <div class="login-logo">
+        <div style="font-size:48px">🏢</div>
+        <h1>园区AI助手</h1>
+        <p>管理后台</p>
+      </div>
+      <el-form @submit.prevent="handleLogin">
+        <el-form-item>
+          <el-input v-model="loginForm.username" placeholder="用户名" size="large" prefix-icon="User" />
+        </el-form-item>
+        <el-form-item>
+          <el-input v-model="loginForm.password" placeholder="密码" type="password" size="large"
+            prefix-icon="Lock" show-password @keyup.enter="handleLogin" />
+        </el-form-item>
+        <el-button type="primary" size="large" style="width:100%" :loading="loginLoading"
+          @click="handleLogin">登录</el-button>
+      </el-form>
+      <p style="text-align:center;color:#c0c4cc;font-size:12px;margin-top:16px">默认账号 admin / admin123</p>
+    </div>
+  </div>
+
+  <!-- 主界面 -->
+  <div v-else class="layout">
+    <!-- 侧边栏 -->
+    <div class="sidebar" :class="{collapsed: sidebarCollapsed}">
+      <div class="sidebar-header">
+        <span class="logo-icon">🏢</span>
+        <span class="logo-text">园区AI助手</span>
+      </div>
+      <div class="nav-menu">
+        <template v-for="group in navGroups" :key="group.label">
+          <div class="nav-group" v-if="!sidebarCollapsed">{{ group.label }}</div>
+          <div v-for="item in group.items" :key="item.key"
+            class="nav-item" :class="{active: currentPage === item.key}"
+            @click="navigate(item.key)"
+            :title="sidebarCollapsed ? item.label : ''">
+            <span class="icon">{{ item.icon }}</span>
+            <span class="label" v-if="!sidebarCollapsed">{{ item.label }}</span>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="main">
+      <!-- 顶栏 -->
+      <div class="topbar">
+        <el-button text @click="sidebarCollapsed = !sidebarCollapsed">
+          <el-icon><Menu /></el-icon>
+        </el-button>
+        <span class="topbar-title">{{ currentPageTitle }}</span>
+        <el-tag type="warning" size="small" v-if="pendingCount > 0">
+          {{ pendingCount }} 条待处理
+        </el-tag>
+        <el-dropdown @command="handleUserMenu">
+          <el-button text>
+            👤 {{ adminName }} <el-icon><ArrowDown /></el-icon>
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
+
+      <!-- 页面内容 -->
+      <div class="content">
+
+        <!-- 仪表盘 -->
+        <div v-if="currentPage === 'dashboard'">
+          <div v-if="pending.articles > 0 || pending.expiring_coupons > 0" class="pending-bar">
+            ⚠️ 待处理：
+            <span v-if="pending.articles > 0">{{ pending.articles }} 篇推文待审核&nbsp;</span>
+            <span v-if="pending.expiring_coupons > 0">{{ pending.expiring_coupons }} 张优惠券即将过期</span>
+          </div>
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="stat-icon" style="background:#e6f7ff">👥</div>
+              <div class="stat-info">
+                <div class="label">今日客流</div>
+                <div class="value">{{ dashboardData.today_visits || 0 }}</div>
+                <div class="trend" :class="visitTrend >= 0 ? 'trend-up' : 'trend-down'">
+                  {{ visitTrend >= 0 ? '↑' : '↓' }} 较昨日{{ Math.abs(visitTrend) }}人
+                </div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background:#f6ffed">🆕</div>
+              <div class="stat-info">
+                <div class="label">今日新增会员</div>
+                <div class="value">{{ dashboardData.today_new_members || 0 }}</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background:#fff7e6">🏪</div>
+              <div class="stat-info">
+                <div class="label">在营商户</div>
+                <div class="value">{{ dashboardData.total_merchants || 0 }}</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background:#fff0f6">👤</div>
+              <div class="stat-info">
+                <div class="label">累计会员</div>
+                <div class="value">{{ dashboardData.total_members || 0 }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="chart-grid">
+            <div class="card">
+              <div class="card-title">📈 近7天客流趋势</div>
+              <div id="visitChart" class="chart-box"></div>
+            </div>
+            <div class="card">
+              <div class="card-title">📊 渠道来源分布</div>
+              <div id="channelChart" class="chart-box"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">🔥 今日热门商户</div>
+            <el-table :data="dashboardData.hot_merchants || []" size="small">
+              <el-table-column type="index" label="排名" width="60" />
+              <el-table-column prop="name" label="商户名称" />
+              <el-table-column prop="count" label="今日咨询次数" />
+            </el-table>
+          </div>
+        </div>
+
+        <!-- 会员管理 -->
+        <div v-if="currentPage === 'members'">
+          <!-- 统计卡片 - 飞书/钉钉风格 -->
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="stat-icon">👥</div>
+              <div class="stat-info">
+                <div class="label">会员总数</div>
+                <div class="value">{{ memberStats.total || 0 }}</div>
+                <div class="trend trend-up">
+                  <el-icon><arrow-up /></el-icon>较上月 +12%
+                </div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon green">✅</div>
+              <div class="stat-info">
+                <div class="label">已绑定微信</div>
+                <div class="value">{{ memberStats.bound || 0 }}</div>
+                <div class="trend" style="color:#8c8c8c">
+                  绑定率 {{ memberStats.total ? Math.round(memberStats.bound/memberStats.total*100) : 0 }}%
+                </div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon orange">⏳</div>
+              <div class="stat-info">
+                <div class="label">待绑定</div>
+                <div class="value">{{ memberStats.pending || 0 }}</div>
+                <div class="trend" style="color:#fa8c16">
+                  可运营转化
+                </div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon blue">🆕</div>
+              <div class="stat-info">
+                <div class="label">今日新增</div>
+                <div class="value">{{ memberStats.today_new || 0 }}</div>
+                <div class="trend trend-up">
+                  <el-icon><arrow-up /></el-icon>较昨日 +5
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 筛选栏 -->
+          <div class="member-filter-bar">
+            <div class="filter-group">
+              <span class="filter-label">搜索：</span>
+              <el-input v-model="memberSearch.keyword" placeholder="昵称/手机号" clearable @keyup.enter="loadMembers" style="width:180px" />
+            </div>
+            <div class="filter-group">
+              <span class="filter-label">渠道：</span>
+              <el-select v-model="memberSearch.source" placeholder="全部" clearable @change="loadMembers" style="width:110px">
+                <el-option label="公众号" value="mp"></el-option>
+                <el-option label="企微" value="wxwork"></el-option>
+                <el-option label="手动" value="manual"></el-option>
+              </el-select>
+            </div>
+            <div class="filter-group">
+              <span class="filter-label">等级：</span>
+              <el-select v-model="memberSearch.level" placeholder="全部" clearable @change="loadMembers" style="width:110px">
+                <el-option label="普通" value="normal"></el-option>
+                <el-option label="VIP" value="vip"></el-option>
+                <el-option label="SVIP" value="svip"></el-option>
+              </el-select>
+            </div>
+            <div class="filter-group">
+              <span class="filter-label">绑定：</span>
+              <el-select v-model="memberSearch.bind_status" placeholder="全部" clearable @change="loadMembers" style="width:110px">
+                <el-option label="已绑定" value="bound"></el-option>
+                <el-option label="待绑定" value="pending"></el-option>
+              </el-select>
+            </div>
+            <div style="flex:1"></div>
+            <el-button @click="loadMembers" :icon="Refresh">刷新</el-button>
+          </div>
+
+          <!-- 会员表格卡片 -->
+          <div class="member-table-card">
+            <div class="table-header">
+              <div class="table-title">
+                会员列表
+                <span class="count">共 {{ memberTotal }} 位会员</span>
+              </div>
+              <div style="display:flex;gap:8px">
+                <el-button @click="downloadMemberTemplate" :icon="Download">下载模板</el-button>
+                <el-upload
+                  action="/api/members/import"
+                  :headers="uploadHeaders"
+                  :on-success="onMemberImportSuccess"
+                  :on-error="onMemberImportError"
+                  :before-upload="beforeMemberImport"
+                  style="display:inline-block">
+                  <el-button :icon="Upload">批量导入</el-button>
+                </el-upload>
+                <el-button type="primary" @click="openMemberDialog()" :icon="Plus">添加会员</el-button>
+                <el-button @click="exportMembers" :icon="Document">导出</el-button>
+              </div>
+            </div>
+
+            <!-- 批量操作栏 -->
+            <div v-if="selectedMembers.length > 0" style="padding:12px 20px;background:#e6f7ff;border-bottom:1px solid #bae7ff;display:flex;align-items:center;gap:12px">
+              <el-checkbox :model-value="true" style="margin-right:8px" @change="memberTableRef?.clearSelection()">
+                <span style="font-size:13px;color:#1890ff">已选 {{ selectedMembers.length }} 项</span>
+              </el-checkbox>
+              <el-button size="small" type="primary" :icon="Ticket" @click="batchIssueCouponToSelected">批量发券</el-button>
+              <el-button size="small" type="danger" :icon="Delete" @click="batchDeleteMembers">批量删除</el-button>
+              <el-button size="small" text @click="memberTableRef?.clearSelection()">取消</el-button>
+            </div>
+
+            <el-table ref="memberTableRef" :data="members" v-loading="membersLoading" @selection-change="handleMemberSelectionChange" style="padding:0 20px">
+              <el-table-column type="selection" width="45" align="center" />
+              <el-table-column label="会员信息" min-width="220">
+                <template #default="{row}">
+                  <div class="member-avatar">
+                    <div class="avatar-img">{{ (row.nickname || row.phone || '?')[0] }}</div>
+                    <div class="avatar-info">
+                      <div class="avatar-name">{{ row.nickname || '未命名用户' }}</div>
+                      <div class="avatar-phone">{{ row.phone || '未绑定手机号' }}</div>
+                    </div>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column label="标签" min-width="180" align="center">
+                <template #default="{row}">
+                  <div class="member-tags">
+                    <span class="member-tag" :class="'level-' + (row.level||'normal')">
+                      {{ {normal:'普通',vip:'VIP',svip:'SVIP'}[row.level] || '普通' }}
+                    </span>
+                    <span class="member-tag" :class="'source-' + (row.source||'mp')">
+                      {{ {mp:'公众号', wxwork:'企微', manual:'手动'}[row.source] || '公众号' }}
+                    </span>
+                    <template v-if="row.tags">
+                      <span v-for="tag in parseTags(row.tags).slice(0, 3)" :key="tag"
+                        class="member-tag" style="background:#f0f5ff;color:#2f54eb">
+                        {{ tag }}
+                      </span>
+                      <span v-if="parseTags(row.tags).length > 3" class="member-tag" style="background:#f5f5f5;color:#8c8c8c">
+                        +{{ parseTags(row.tags).length - 3 }}
+                      </span>
+                    </template>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column label="绑定状态" width="90" align="center">
+                <template #default="{row}">
+                  <span class="member-tag" :class="row.openid_mp || row.openid_wx ? 'bind-yes' : 'bind-no'">
+                    {{ row.openid_mp || row.openid_wx ? '已绑定' : '待绑定' }}
+                  </span>
+                </template>
+              </el-table-column>
+              <el-table-column prop="visit_count" label="入园" width="70" align="center">
+                <template #default="{row}">
+                  <span style="font-weight:600;color:#1890ff">{{ row.visit_count || 0 }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column prop="created_at" label="注册时间" width="150" align="center">
+                <template #default="{row}">
+                  <span style="font-size:12px;color:#595959">{{ row.created_at?.slice(0, 16) || '-' }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="180" fixed="right" align="center">
+                <template #default="{row}">
+                  <div class="member-actions">
+                    <el-button text size="small" :icon="View" @click="openMemberDetail(row)">详情</el-button>
+                    <el-button text size="small" :icon="Edit" @click="openMemberDialog(row)">编辑</el-button>
+                    <el-dropdown size="small" @command="(cmd) => handleMemberCommand(cmd, row)">
+                      <el-button text size="small">更多<el-icon class="el-icon--right"><arrow-down /></el-icon></el-button>
+                      <template #dropdown>
+                        <el-dropdown-menu>
+                          <el-dropdown-item command="coupon" :icon="Ticket">发放优惠券</el-dropdown-item>
+                          <el-dropdown-item command="message" :icon="Message">发送消息</el-dropdown-item>
+                          <el-dropdown-item command="delete" divided style="color:#f56c6c" :icon="Delete">删除会员</el-dropdown-item>
+                        </el-dropdown-menu>
+                      </template>
+                    </el-dropdown>
+                  </div>
+                </template>
+              </el-table-column>
+              <template #empty>
+                <div class="member-empty">
+                  <div class="empty-icon">👤</div>
+                  <div class="empty-title">暂无会员数据</div>
+                  <div class="empty-desc">还没有会员加入，点击下方按钮添加第一个会员</div>
+                  <el-button type="primary" size="large" @click="openMemberDialog()" :icon="Plus">添加第一个会员</el-button>
+                </div>
+              </template>
+            </el-table>
+
+            <div style="padding:16px 20px;border-top:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:13px;color:#8c8c8c">显示 {{ members.length }} / {{ memberTotal }} 条</span>
+              <el-pagination v-model:current-page="memberPage" v-model:page-size="memberPageSize"
+                :total="memberTotal" :page-sizes="[10, 20, 50, 100]"
+                layout="sizes, prev, pager, next, jumper"
+                @change="loadMembers" />
+            </div>
+          </div>
+          <!-- 会员详情抽屉 -->
+          <el-drawer v-model="memberDrawer" title="会员详情" size="560px">
+            <div v-if="selectedMember" style="padding:0 8px">
+              <!-- 头部信息卡片 -->
+              <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;padding:20px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:12px;color:#fff">
+                <el-avatar :size="64" style="background:#fff;color:#667eea;font-size:24px;font-weight:600">
+                  {{ (selectedMember.nickname || selectedMember.phone || '?')[0] }}
+                </el-avatar>
+                <div style="flex:1">
+                  <div style="font-size:18px;font-weight:600;margin-bottom:4px">{{ selectedMember.nickname || '未命名用户' }}</div>
+                  <div style="font-size:13px;opacity:0.9">{{ selectedMember.phone || '未绑定手机号' }}</div>
+                  <div style="margin-top:8px;display:flex;gap:8px">
+                    <span class="badge" style="background:rgba(255,255,255,0.2);color:#fff">
+                      {{ {normal:'普通会员',vip:'VIP会员',svip:'SVIP会员'}[selectedMember.level] || '普通会员' }}
+                    </span>
+                    <span class="badge" :style="selectedMember.openid_mp || selectedMember.openid_wx ? 'background:rgba(82,196,26,0.3);color:#fff' : 'background:rgba(255,255,255,0.2);color:#fff'">
+                      {{ selectedMember.openid_mp || selectedMember.openid_wx ? '已绑定微信' : '待绑定' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 基础信息 -->
+              <div class="card" style="margin-bottom:16px">
+                <div class="card-title">📋 基础信息</div>
+                <el-descriptions :column="2" border size="small">
+                  <el-descriptions-item label="会员ID">#{{ selectedMember.id }}</el-descriptions-item>
+                  <el-descriptions-item label="注册渠道">
+                    <span class="badge" :class="'badge-' + (selectedMember.source||'mp')">
+                      {{ {mp:'公众号', wxwork:'企微', manual:'手动录入'}[selectedMember.source] || '公众号' }}
+                    </span>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="入园次数">{{ selectedMember.visit_count || 0 }} 次</el-descriptions-item>
+                  <el-descriptions-item label="最后入园">{{ selectedMember.last_visit_at || '暂无记录' }}</el-descriptions-item>
+                  <el-descriptions-item label="注册时间" :span="2">{{ selectedMember.created_at }}</el-descriptions-item>
+                  <el-descriptions-item label="备注" :span="2">{{ selectedMember.note || '暂无备注' }}</el-descriptions-item>
+                </el-descriptions>
+              </div>
+
+              <!-- 用户标签 -->
+              <div class="card" style="margin-bottom:16px">
+                <div class="card-title">🏷️ 用户标签</div>
+                <div v-if="parseTags(selectedMember.tags).length > 0" style="display:flex;flex-wrap:wrap;gap:8px">
+                  <el-tag v-for="tag in parseTags(selectedMember.tags)" :key="tag"
+                    size="default" effect="plain"
+                    :type="getTagType(tag)"
+                    style="border-radius:16px">
+                    {{ tag }}
+                  </el-tag>
+                </div>
+                <div v-else style="color:#909399;font-size:13px;padding:8px 0">
+                  暂无标签，用户与客服对话后将自动生成
+                </div>
+              </div>
+
+              <!-- 微信绑定信息 -->
+              <div class="card" style="margin-bottom:16px">
+                <div class="card-title">🔗 微信绑定</div>
+                <el-descriptions :column="1" border size="small">
+                  <el-descriptions-item label="公众号OpenID">
+                    <span v-if="selectedMember.openid_mp" style="font-family:monospace;font-size:12px">{{ selectedMember.openid_mp }}</span>
+                    <span v-else style="color:#909399">未绑定</span>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="企微UserID">
+                    <span v-if="selectedMember.openid_wx" style="font-family:monospace;font-size:12px">{{ selectedMember.openid_wx }}</span>
+                    <span v-else style="color:#909399">未绑定</span>
+                  </el-descriptions-item>
+                </el-descriptions>
+              </div>
+
+              <!-- 优惠券 -->
+              <div class="card" style="margin-bottom:16px">
+                <div class="card-title">🎫 优惠券 ({{ (selectedMember.coupons || []).length }})</div>
+
+                <!-- 内联发券区 -->
+                <div style="margin-bottom:12px;padding:12px;background:#f0f9ff;border:1px solid #bae7ff;border-radius:8px">
+                  <div style="display:flex;gap:8px;align-items:center">
+                    <el-select
+                      v-model="memberIssueTplId"
+                      placeholder="选优惠券模板"
+                      size="small"
+                      style="flex:1"
+                      :disabled="couponTemplates.length === 0"
+                    >
+                      <el-option
+                        v-for="tpl in couponTemplates"
+                        :key="tpl.id"
+                        :label="`${tpl.name}（${tpl.discount_type === 'cash' ? '¥'+tpl.discount_value+'满减' : tpl.discount_type === 'discount' ? tpl.discount_value+'折' : '赠品'}）`"
+                        :value="tpl.id"
+                      />
+                    </el-select>
+                    <el-button
+                      type="primary"
+                      size="small"
+                      :loading="memberIssueLoading"
+                      :disabled="!memberIssueTplId || couponTemplates.length === 0"
+                      @click="inlineIssueCoupon(selectedMember.id)"
+                    >发放</el-button>
+                  </div>
+                  <div v-if="couponTemplates.length === 0" style="font-size:12px;color:#fa8c16;margin-top:6px">
+                    ⚠️ 暂无可用模板，请先到「优惠券」页面创建
+                  </div>
+                </div>
+
+                <el-table v-if="(selectedMember.coupons || []).length > 0" :data="selectedMember.coupons" size="small">
+                  <el-table-column prop="name" label="券名" min-width="120" />
+                  <el-table-column prop="code" label="券码" width="100">
+                    <template #default="{row}">
+                      <span style="font-family:monospace;font-size:11px">{{ row.code }}</span>
+                    </template>
+                  </el-table-column>
+                  <el-table-column prop="status" label="状态" width="70" align="center">
+                    <template #default="{row}">
+                      <span class="badge" :class="row.status === 'used' ? 'badge-draft' : 'badge-active'">
+                        {{ {unused:'未使用',used:'已使用',expired:'已过期'}[row.status] || row.status }}
+                      </span>
+                    </template>
+                  </el-table-column>
+                  <el-table-column prop="expire_at" label="过期时间" width="140" />
+                </el-table>
+                <el-empty v-else description="暂无优惠券" :image-size="60" style="padding:20px 0" />
+              </div>
+
+              <!-- 近期对话 -->
+              <div class="card">
+                <div class="card-title">💬 近期对话 ({{ (selectedMember.chat_logs || []).length }})</div>
+                <div v-if="(selectedMember.chat_logs || []).length > 0" style="max-height:300px;overflow-y:auto">
+                  <div v-for="log in selectedMember.chat_logs" :key="log.id"
+                    style="margin-bottom:12px;padding:12px;background:#f8f9fa;border-radius:8px">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                      <el-avatar :size="24" :style="{background: log.role==='user'?'#1890ff':'#52c41a',fontSize:'12px'}">
+                        {{ log.role === 'user' ? '游' : '助' }}
+                      </el-avatar>
+                      <span style="font-size:12px;color:#909399">{{ log.created_at }}</span>
+                    </div>
+                    <div style="font-size:13px;line-height:1.6;padding-left:32px">{{ log.content }}</div>
+                  </div>
+                </div>
+                <el-empty v-else description="暂无对话记录" :image-size="60" style="padding:20px 0" />
+              </div>
+            </div>
+          </el-drawer>
+          <!-- 添加/编辑会员对话框 -->
+          <el-dialog v-model="memberDialog" :title="memberForm.id ? '编辑会员' : '添加会员'" width="520px">
+            <el-form :model="memberForm" label-width="100px">
+              <el-form-item label="手机号" required>
+                <el-input v-model="memberForm.phone" placeholder="请输入手机号" maxlength="11" />
+              </el-form-item>
+              <el-form-item label="昵称">
+                <el-input v-model="memberForm.nickname" placeholder="请输入昵称（可选）" />
+              </el-form-item>
+              <el-form-item label="会员等级">
+                <el-select v-model="memberForm.level" style="width:100%">
+                  <el-option label="普通会员" value="normal"></el-option>
+                  <el-option label="VIP" value="vip"></el-option>
+                  <el-option label="SVIP" value="svip"></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item label="渠道来源">
+                <el-select v-model="memberForm.source" style="width:100%">
+                  <el-option label="公众号" value="mp"></el-option>
+                  <el-option label="企业微信" value="wxwork"></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item label="微信绑定" v-if="!memberForm.id">
+                <div style="color:#909399;font-size:13px;margin-bottom:8px">
+                  保存后将生成绑定二维码，用户扫码关注后即可完成绑定
+                </div>
+              </el-form-item>
+              <el-form-item label="绑定二维码" v-if="memberForm.bind_qrcode">
+                <div style="text-align:center;padding:16px;background:#f5f5f5;border-radius:8px">
+                  <img :src="memberForm.bind_qrcode" style="width:200px;height:200px" />
+                  <div style="color:#666;font-size:13px;margin-top:8px">请用户微信扫码完成绑定</div>
+                </div>
+              </el-form-item>
+            </el-form>
+            <template #footer>
+              <el-button @click="memberDialog = false">取消</el-button>
+              <el-button type="primary" @click="saveMember">保存</el-button>
+            </template>
+          </el-dialog>
+        </div>
+
+        <!-- 商户管理 -->
+        <div v-if="currentPage === 'merchants'">
+          <!-- 统计卡片 -->
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="stat-icon" style="background:#e6f7ff">🏪</div>
+              <div class="stat-info">
+                <div class="label">商户总数</div>
+                <div class="value">{{ merchantStats.total || 0 }}</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background:#f6ffed">✅</div>
+              <div class="stat-info">
+                <div class="label">营业中</div>
+                <div class="value">{{ merchantStats.active || 0 }}</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background:#fff7e6">🆕</div>
+              <div class="stat-info">
+                <div class="label">今日新增</div>
+                <div class="value">{{ merchantStats.today_new || 0 }}</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background:#fff0f6">⭐</div>
+              <div class="stat-info">
+                <div class="label">平均评分</div>
+                <div class="value">{{ merchantStats.avg_rating || '0.0' }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="table-toolbar">
+              <el-select v-model="merchantCategory" placeholder="全部分类" clearable
+                style="width:120px" @change="loadMerchants">
+                <el-option label="餐饮" value="餐饮"></el-option>
+                <el-option label="购物" value="购物"></el-option>
+                <el-option label="娱乐" value="娱乐"></el-option>
+                <el-option label="亲子" value="亲子"></el-option>
+                <el-option label="服务" value="服务"></el-option>
+                <el-option label="教育" value="教育"></el-option>
+                <el-option label="健身" value="健身"></el-option>
+                <el-option label="美容" value="美容"></el-option>
+              </el-select>
+              <el-select v-model="merchantStatus" placeholder="全部状态" clearable
+                style="width:120px" @change="loadMerchants">
+                <el-option label="营业中" :value="1" />
+                <el-option label="已下架" :value="0" />
+              </el-select>
+              <el-input v-model="merchantSearch" placeholder="搜索商户名称" clearable style="width:200px" @keyup.enter="loadMerchants">
+                <template #prefix>🔍</template>
+              </el-input>
+              <div class="spacer"></div>
+              <el-button @click="exportMerchants">📥 导出</el-button>
+              <el-button @click="downloadMerchantTemplate">📥 下载模板</el-button>
+              <el-upload
+                action="/api/merchants/import"
+                :headers="uploadHeaders"
+                :on-success="onMerchantImportSuccess"
+                :on-error="onMerchantImportError"
+                :before-upload="beforeMerchantImport"
+                accept=".xlsx,.xls,.csv"
+                :show-file-list="false"
+                style="display:inline-block;margin-right:8px">
+                <el-button>📤 导入商户</el-button>
+              </el-upload>
+              <el-button type="primary" @click="openMerchantDialog()">+ 添加商户</el-button>
+            </div>
+            <el-table :data="merchants" v-loading="merchantsLoading">
+              <el-table-column label="商户" min-width="240">
+                <template #default="{row}">
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <div v-if="row.logo" style="width:60px;height:60px;flex-shrink:0;border-radius:8px;overflow:hidden">
+                      <img :src="row.logo" style="width:100%;height:100%;object-fit:cover" />
+                    </div>
+                    <div v-else style="width:60px;height:60px;flex-shrink:0;border-radius:8px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px">
+                      {{ row.name ? row.name.charAt(0) : '🏪' }}
+                    </div>
+                    <div style="flex:1;min-width:0">
+                      <div style="font-weight:500;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ row.name }}</div>
+                      <div style="font-size:12px;color:#909399">
+                        <span class="badge" :class="'badge-' + (row.category==='餐饮'?'food':row.category==='购物'?'shop':row.category==='娱乐'?'fun':row.category==='亲子'?'family':'other')" style="margin-right:4px">{{ row.category }}</span>
+                        <span v-if="row.rating" style="color:#fa8c16">⭐ {{ row.rating }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column label="位置/楼层" min-width="140">
+                <template #default="{row}">
+                  <div>{{ row.location || '-' }}</div>
+                  <div style="font-size:12px;color:#909399">{{ row.floor || '-' }}</div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="open_hours" label="营业时间" min-width="120" />
+              <el-table-column label="联系方式" min-width="120">
+                <template #default="{row}">
+                  <div v-if="row.phone">📞 {{ row.phone }}</div>
+                  <div v-else style="color:#999">-</div>
+                </template>
+              </el-table-column>
+              <el-table-column label="状态" width="90" align="center">
+                <template #default="{row}">
+                  <span class="badge" :class="row.status===1?'badge-published':'badge-draft'">
+                    {{ row.status===1 ? '营业中' : '已下架' }}
+                  </span>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="180" fixed="right">
+                <template #default="{row}">
+                  <el-button text size="small" @click="openMerchantDialog(row)">编辑</el-button>
+                  <el-button text size="small" :type="row.status===1?'warning':'success'" 
+                    @click="toggleMerchantStatus(row)">
+                    {{ row.status===1 ? '下架' : '上架' }}
+                  </el-button>
+                  <el-button text size="small" type="danger" @click="deleteMerchant(row.id)">删除</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+            <el-pagination
+              v-model:current-page="merchantPage"
+              v-model:page-size="merchantPageSize"
+              :total="merchantTotal"
+              :page-sizes="[10, 20, 50]"
+              layout="total, sizes, prev, pager, next"
+              style="margin-top:16px;justify-content:flex-end"
+              @change="loadMerchants" />
+          </div>
+          <!-- 商户编辑对话框 -->
+          <el-dialog v-model="merchantDialog" :title="merchantForm.id ? '编辑商户' : '添加商户'" width="700px">
+            <el-form :model="merchantForm" label-width="100px">
+              <el-row :gutter="16">
+                <el-col :span="16">
+                  <el-form-item label="商户名称" required>
+                    <el-input v-model="merchantForm.name" placeholder="请输入商户名称" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                  <el-form-item label="分类" required>
+                    <el-select v-model="merchantForm.category" placeholder="请选择分类" style="width:100%" popper-class="merchant-category-dropdown">
+                      <el-option label="餐饮" value="餐饮"></el-option>
+                      <el-option label="购物" value="购物"></el-option>
+                      <el-option label="娱乐" value="娱乐"></el-option>
+                      <el-option label="亲子" value="亲子"></el-option>
+                      <el-option label="服务" value="服务"></el-option>
+                      <el-option label="教育" value="教育"></el-option>
+                      <el-option label="健身" value="健身"></el-option>
+                      <el-option label="美容" value="美容"></el-option>
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-row :gutter="16">
+                <el-col :span="12">
+                  <el-form-item label="位置描述">
+                    <el-input v-model="merchantForm.location" placeholder="如：A座1楼大厅" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="楼层">
+                    <el-input v-model="merchantForm.floor" placeholder="如：B1、L1、L2" />
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-row :gutter="16">
+                <el-col :span="12">
+                  <el-form-item label="营业时间">
+                    <el-input v-model="merchantForm.open_hours" placeholder="如：09:00-22:00" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="联系电话">
+                    <el-input v-model="merchantForm.phone" placeholder="请输入联系电话" />
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-form-item label="商户简介">
+                <el-input v-model="merchantForm.description" type="textarea" :rows="3" placeholder="简要描述商户特色和主营业务" />
+              </el-form-item>
+              <el-row :gutter="16">
+                <el-col :span="12">
+                  <el-form-item label="Logo图片">
+                    <el-input v-model="merchantForm.logo" placeholder="图片URL或上传" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="评分">
+                    <el-rate v-model="merchantForm.rating" :max="5" allow-half show-score />
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-row :gutter="16">
+                <el-col :span="12">
+                  <el-form-item label="纬度">
+                    <el-input v-model="merchantForm.lat" placeholder="可选，如：31.2040" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="经度">
+                    <el-input v-model="merchantForm.lng" placeholder="可选，如：121.6088" />
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-form-item label="购买链接">
+                <el-input v-model="merchantForm.purchase_url" placeholder="微信小程序或H5购买链接" />
+              </el-form-item>
+              <el-form-item label="标签">
+                <el-select v-model="merchantForm.tags" multiple filterable allow-create placeholder="添加标签，如：网红店、新品上市" style="width:100%" />
+              </el-form-item>
+            </el-form>
+            <template #footer>
+              <el-button @click="merchantDialog = false">取消</el-button>
+              <el-button type="primary" @click="saveMerchant">保存</el-button>
+            </template>
+          </el-dialog>
+        </div>
+
+        <!-- 对话记录 -->
+        <div v-if="currentPage === 'chats'">
+          <!-- 统计卡片 -->
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="stat-icon blue">💬</div>
+              <div class="stat-info">
+                <div class="label">今日会话数</div>
+                <div class="value">{{ chatStats.today_sessions || 0 }}</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon green">📝</div>
+              <div class="stat-info">
+                <div class="label">今日消息数</div>
+                <div class="value">{{ chatStats.today_messages || 0 }}</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background:linear-gradient(135deg,#fa8c16,#d46b08)">👥</div>
+              <div class="stat-info">
+                <div class="label">累计会话</div>
+                <div class="value">{{ chatStats.total_sessions || 0 }}</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background:linear-gradient(135deg,#eb2f96,#c41d7f)">⚡</div>
+              <div class="stat-info">
+                <div class="label">平均消息/会话</div>
+                <div class="value">{{ chatStats.avg_msgs_per_session || 0 }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 搜索栏 -->
+          <div class="member-filter-bar" style="margin-bottom:16px">
+            <el-input v-model="chatKeyword" placeholder="搜索游客ID或消息内容" clearable style="width:260px"
+              @keyup.enter="loadChats">
+              <template #prefix>🔍</template>
+            </el-input>
+            <el-select v-model="chatChannel" placeholder="全部渠道" clearable style="width:130px" @change="loadChats">
+              <el-option label="企微客服" value="wxwork_kf" />
+              <el-option label="公众号" value="mp_wechat" />
+            </el-select>
+            <el-date-picker v-model="chatDateRange" type="daterange" range-separator="至"
+              start-placeholder="开始日期" end-placeholder="结束日期" style="width:240px"
+              value-format="YYYY-MM-DD" @change="loadChats" />
+            <el-button @click="loadChats" :icon="Refresh">刷新</el-button>
+          </div>
+
+          <!-- 对话列表 -->
+          <div class="card" style="padding:0">
+            <div style="padding:16px 20px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between">
+              <div style="font-size:15px;font-weight:600;color:#262626">
+                💬 对话列表
+                <span style="font-size:12px;color:#8c8c8c;font-weight:normal;margin-left:8px">共 {{ chatTotal }} 个会话</span>
+              </div>
+            </div>
+            <el-table :data="chats" v-loading="chatsLoading" style="width:100%" @row-click="openChatDetail">
+              <el-table-column label="游客ID" min-width="200">
+                <template #default="{row}">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#1890ff,#096dd9);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:600;flex-shrink:0">
+                      游
+                    </div>
+                    <div>
+                      <div style="font-size:13px;font-weight:500;color:#262626">{{ (row.user_id || row.session_id || '').slice(0,16) }}...</div>
+                      <div style="font-size:12px;color:#8c8c8c">{{ {wxwork_kf:'企微客服',mp_wechat:'公众号'}[row.channel] || row.channel }}</div>
+                    </div>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column label="最后一条消息" min-width="280">
+                <template #default="{row}">
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <span v-if="row.last_role === 'user'" style="background:#e6f7ff;color:#1890ff;padding:2px 6px;border-radius:4px;font-size:11px;flex-shrink:0">游客</span>
+                    <span v-else style="background:#f6ffed;color:#52c41a;padding:2px 6px;border-radius:4px;font-size:11px;flex-shrink:0">AI</span>
+                    <span style="font-size:13px;color:#595959;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                      {{ row.last_msg || '(无内容)' }}
+                    </span>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="msg_count" label="消息数" width="80" align="center">
+                <template #default="{row}">
+                  <el-badge :value="row.msg_count" :max="99" type="info" />
+                </template>
+              </el-table-column>
+              <el-table-column label="最后时间" width="160" align="center">
+                <template #default="{row}">
+                  <span style="font-size:12px;color:#8c8c8c">{{ row.last_time ? row.last_time.slice(0,16) : '-' }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="90" align="center">
+                <template #default="{row}">
+                  <el-button text size="small" type="primary" @click.stop="openChatDetail(row)">查看详情</el-button>
+                </template>
+              </el-table-column>
+              <template #empty>
+                <el-empty description="暂无对话记录" :image-size="80" style="padding:40px 0" />
+              </template>
+            </el-table>
+            <div style="padding:16px 20px;border-top:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:13px;color:#8c8c8c">显示 {{ chats.length }} / {{ chatTotal }} 个会话</span>
+              <el-pagination v-model:current-page="chatPage" v-model:page-size="chatPageSize"
+                :total="chatTotal" :page-sizes="[20, 50, 100]"
+                layout="sizes, prev, pager, next" @change="loadChats" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 对话详情侧边栏（支持人工接管 + 直接发消息） -->
+        <el-drawer v-model="chatDrawer" size="560px" destroy-on-close
+          :title="'对话详情'">
+          <template #header>
+            <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+              <div>
+                <span style="font-size:15px;font-weight:600">💬 对话详情</span>
+                <span style="font-size:12px;color:#8c8c8c;margin-left:8px">
+                  {{ (currentChat.session_id || '').slice(0,18) }}...
+                </span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <!-- 接管状态标签 -->
+                <el-tag v-if="currentChat.taken_over" type="danger" size="small" effect="dark">
+                  🙋 人工接管中
+                </el-tag>
+                <el-tag v-else type="success" size="small" effect="light">
+                  🤖 AI 自动回复
+                </el-tag>
+                <!-- 接管/释放按钮 -->
+                <el-button v-if="!currentChat.taken_over" type="warning" size="small"
+                  @click="takeoverSession" :loading="takeoverLoading">
+                  人工接管
+                </el-button>
+                <el-button v-else type="success" size="small"
+                  @click="releaseSession" :loading="takeoverLoading">
+                  恢复AI回复
+                </el-button>
+              </div>
+            </div>
+          </template>
+
+          <!-- 接管提示横幅 -->
+          <el-alert v-if="currentChat.taken_over" type="warning" :closable="false"
+            style="margin-bottom:12px;border-radius:8px">
+            <template #title>
+              <span>🙋 人工接管中 — AI已静默，游客消息不会被AI回复</span>
+            </template>
+            <div style="font-size:12px;color:#8c8c8c;margin-top:4px">
+              接管人：{{ currentChat.takeover_by || '-' }}
+              &nbsp;|&nbsp;
+              接管时间：{{ currentChat.takeover_at || '-' }}
+              <br>
+              你可以在下方输入框直接发消息给游客，也可在企微客服工作台回复。
+            </div>
+          </el-alert>
+
+          <!-- 对话气泡列表 -->
+          <div v-if="currentChat.logs && currentChat.logs.length > 0"
+            style="padding:0 4px;flex:1;overflow-y:auto;max-height:calc(100vh - 340px)">
+            <div style="text-align:center;color:#8c8c8c;font-size:12px;margin-bottom:12px">
+              共 {{ currentChat.logs.length }} 条消息
+            </div>
+            <div v-for="(log, idx) in currentChat.logs" :key="idx"
+              style="margin-bottom:14px;display:flex"
+              :style="{justifyContent: log.role === 'user' ? 'flex-start' : 'flex-end'}">
+              <div style="max-width:82%">
+                <div style="font-size:11px;color:#8c8c8c;margin-bottom:3px"
+                  :style="{textAlign: log.role === 'user' ? 'left' : 'right'}">
+                  <span v-if="log.role === 'user'">👤 游客</span>
+                  <span v-else-if="log.role === 'human'" style="color:#d46b08">
+                    🙋 人工（{{ log.human_sender || '管理员' }}）
+                  </span>
+                  <span v-else>🤖 AI助手</span>
+                  <span style="margin-left:6px">{{ (log.created_at || '').slice(5,16) }}</span>
+                </div>
+                <div style="padding:10px 14px;font-size:13px;line-height:1.6;word-break:break-word;white-space:pre-wrap"
+                  :style="{
+                    background: log.role === 'user' ? '#f0f5ff'
+                              : log.role === 'human' ? '#fff7e6' : '#f6ffed',
+                    color: log.role === 'user' ? '#2f54eb'
+                         : log.role === 'human' ? '#d46b08' : '#389e0d',
+                    borderRadius: log.role === 'user' ? '4px 12px 12px 12px' : '12px 4px 12px 12px',
+                    border: log.role === 'human' ? '1px solid #ffd591' : 'none'
+                  }">
+                  {{ log.content }}
+                </div>
+              </div>
+            </div>
+          </div>
+          <el-empty v-else description="暂无消息记录" :image-size="80" style="margin-top:40px;margin-bottom:20px" />
+
+          <!-- 管理员直接发消息输入框（仅接管中显示，或者任何时候都可发） -->
+          <div style="border-top:1px solid #f0f0f0;padding:16px 4px 0;margin-top:8px">
+            <div style="font-size:12px;color:#8c8c8c;margin-bottom:8px">
+              📤 直接向游客发送消息（走企微客服通道）
+            </div>
+            <div style="display:flex;gap:8px;align-items:flex-end">
+              <el-input v-model="sendMessageContent" type="textarea" :rows="3"
+                placeholder="输入要发给游客的消息..."
+                style="flex:1" :maxlength="500" show-word-limit />
+              <el-button type="primary" :loading="sendingMessage"
+                @click="sendMessageToVisitor"
+                style="height:80px;padding:0 16px">
+                发送
+              </el-button>
+            </div>
+            <div v-if="currentChat.taken_over" style="margin-top:6px;font-size:11px;color:#faad14">
+              ⚠️ 接管中：AI已静默，只有你（或企微工作台）能回复游客
+            </div>
+            <div v-else style="margin-top:6px;font-size:11px;color:#52c41a">
+              ✅ AI正在自动回复。你也可以插队发一条消息，不会影响AI。
+            </div>
+          </div>
+        </el-drawer>
+
+
+
+        <!-- 活动管理 -->
+        <div v-if="currentPage === 'activities'">
+          <!-- 统计卡片 -->
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="stat-icon" style="background:#e6f7ff">🎉</div>
+              <div class="stat-info">
+                <div class="label">活动总数</div>
+                <div class="value">{{ activityStats.total || 0 }}</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background:#f6ffed">🔥</div>
+              <div class="stat-info">
+                <div class="label">进行中</div>
+                <div class="value">{{ activityStats.active || 0 }}</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background:#f5f5f5">✅</div>
+              <div class="stat-info">
+                <div class="label">已结束</div>
+                <div class="value">{{ activityStats.ended || 0 }}</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background:#fff7e6">👥</div>
+              <div class="stat-info">
+                <div class="label">今日报名</div>
+                <div class="value">{{ activityStats.today_signup || 0 }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="table-toolbar">
+              <el-select v-model="activityCategory" placeholder="全部分类" clearable style="width:120px" @change="loadActivities">
+                <el-option label="亲子活动" value="family" />
+                <el-option label="美食节" value="food" />
+                <el-option label="市集" value="market" />
+                <el-option label="演出" value="show" />
+                <el-option label="讲座" value="lecture" />
+                <el-option label="运动" value="sports" />
+                <el-option label="其他" value="other" />
+              </el-select>
+              <el-select v-model="activityStatus" placeholder="全部状态" clearable style="width:120px" @change="loadActivities">
+                <el-option label="草稿" value="draft" />
+                <el-option label="进行中" value="active" />
+                <el-option label="已结束" value="ended" />
+              </el-select>
+              <el-input v-model="activitySearch" placeholder="搜索活动标题" clearable style="width:200px" @keyup.enter="loadActivities">
+                <template #prefix>🔍</template>
+              </el-input>
+              <div class="spacer"></div>
+              <el-button @click="downloadActivityTemplate">📥 下载模板</el-button>
+              <el-upload
+                action="/api/activities/import"
+                :headers="uploadHeaders"
+                :on-success="onActivityImportSuccess"
+                :on-error="onActivityImportError"
+                :before-upload="beforeActivityImport"
+                accept=".xlsx,.xls,.csv"
+                :show-file-list="false"
+                style="display:inline-block;margin-right:8px">
+                <el-button>📤 导入活动</el-button>
+              </el-upload>
+              <el-button type="primary" @click="openActivityDialog()">+ 创建活动</el-button>
+            </div>
+            <el-table :data="activities" v-loading="activitiesLoading">
+              <el-table-column label="活动" min-width="280">
+                <template #default="{row}">
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <div v-if="row.cover_image" style="width:80px;height:60px;flex-shrink:0;border-radius:4px;overflow:hidden">
+                      <img :src="row.cover_image" style="width:100%;height:100%;object-fit:cover" />
+                    </div>
+                    <div v-else style="width:80px;height:60px;flex-shrink:0;border-radius:4px;background:linear-gradient(135deg,#e0e0e0 0%,#f5f5f5 100%);display:flex;align-items:center;justify-content:center;color:#999;font-size:12px">
+                      🖼️
+                    </div>
+                    <div style="flex:1;min-width:0">
+                      <div style="font-weight:500;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ row.title }}</div>
+                      <div style="font-size:12px;color:#909399">
+                        <span class="badge" style="margin-right:4px">{{ {family:'亲子',food:'美食',market:'市集',show:'演出',lecture:'讲座',sports:'运动',other:'其他'}[row.category] || '其他' }}</span>
+                        <span v-if="row.tags" style="color:#1890ff">{{ row.tags }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column label="时间" width="180">
+                <template #default="{row}">
+                  <div style="font-size:13px">{{ row.start_at }}</div>
+                  <div style="font-size:12px;color:#909399">至 {{ row.end_at }}</div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="location" label="地点" min-width="120" show-overflow-tooltip />
+              <el-table-column label="报名" width="100" align="center">
+                <template #default="{row}">
+                  <div style="font-weight:600;color:#1890ff">{{ row.signup_count || 0 }}</div>
+                  <div style="font-size:12px;color:#909399">/{{ row.max_people || '∞' }}</div>
+                </template>
+              </el-table-column>
+              <el-table-column label="浏览" width="80" align="center">
+                <template #default="{row}">
+                  <div style="font-size:13px">{{ row.view_count || 0 }}</div>
+                </template>
+              </el-table-column>
+              <el-table-column label="费用" width="90" align="center">
+                <template #default="{row}">
+                  <span style="color:#f5222d;font-weight:500">{{ row.fee > 0 ? '¥' + row.fee : '免费' }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="状态" width="90" align="center">
+                <template #default="{row}">
+                  <span class="badge" :class="'badge-' + (row.status||'draft')">
+                    {{ {draft:'草稿',active:'进行中',ended:'已结束'}[row.status] || '草稿' }}
+                  </span>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="180" fixed="right">
+                <template #default="{row}">
+                  <el-button text size="small" @click="openActivityDialog(row)">编辑</el-button>
+                  <el-button text size="small" type="success" @click="publishActivity(row.id)"
+                    v-if="row.status==='draft'">发布</el-button>
+                  <el-button text size="small" type="danger" @click="deleteActivity(row.id)">删除</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+            <el-pagination
+              v-model:current-page="activityPage"
+              v-model:page-size="activityPageSize"
+              :total="activityTotal"
+              :page-sizes="[10, 20, 50]"
+              layout="total, sizes, prev, pager, next"
+              style="margin-top:16px;justify-content:flex-end"
+              @change="loadActivities" />
+          </div>
+          <!-- 活动编辑对话框 -->
+          <el-dialog v-model="activityDialog" :title="activityForm.id ? '编辑活动' : '创建活动'" width="720px">
+            <el-form :model="activityForm" label-width="100px">
+              <el-row :gutter="16">
+                <el-col :span="16">
+                  <el-form-item label="活动标题">
+                    <el-input v-model="activityForm.title" placeholder="请输入活动标题" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                  <el-form-item label="活动分类" required>
+                    <el-select 
+                      v-model="activityForm.category" 
+                      placeholder="请选择分类" 
+                      style="width:100%" 
+                      clearable
+                      popper-class="activity-category-dropdown">
+                      <el-option label="亲子活动" value="family"></el-option>
+                      <el-option label="美食节" value="food"></el-option>
+                      <el-option label="市集" value="market"></el-option>
+                      <el-option label="演出" value="show"></el-option>
+                      <el-option label="讲座" value="lecture"></el-option>
+                      <el-option label="运动" value="sports"></el-option>
+                      <el-option label="其他" value="other"></el-option>
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-form-item label="副标题">
+                <el-input v-model="activityForm.subtitle" placeholder="一句话描述活动亮点" />
+              </el-form-item>
+              <el-row :gutter="16">
+                <el-col :span="12">
+                  <el-form-item label="活动时间">
+                    <el-date-picker v-model="activityForm.timeRange" type="datetimerange"
+                      range-separator="至" start-placeholder="开始时间" end-placeholder="结束时间" style="width:100%" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="活动地点">
+                    <el-input v-model="activityForm.location" placeholder="请输入活动地点" />
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-row :gutter="16">
+                <el-col :span="8">
+                  <el-form-item label="限制人数">
+                    <el-input-number v-model="activityForm.max_people" :min="0" :max="9999" style="width:100%" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                  <el-form-item label="活动费用">
+                    <el-input-number v-model="activityForm.fee" :min="0" :precision="2" style="width:100%" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                  <el-form-item label="活动标签">
+                    <el-input v-model="activityForm.tags" placeholder="如: 周末,亲子" />
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-form-item label="封面图片">
+                <el-input v-model="activityForm.cover_image" placeholder="请输入图片URL或上传图片" />
+              </el-form-item>
+              <el-form-item label="推送渠道">
+                <el-checkbox-group v-model="activityForm.push_channels">
+                  <el-checkbox value="mp">公众号</el-checkbox>
+                  <el-checkbox value="wxwork">企业微信</el-checkbox>
+                  <el-checkbox value="sms">短信通知</el-checkbox>
+                </el-checkbox-group>
+              </el-form-item>
+              <el-form-item label="活动详情">
+                <el-input v-model="activityForm.content" type="textarea" :rows="6" placeholder="请输入活动详情，支持换行" />
+              </el-form-item>
+            </el-form>
+            <template #footer>
+              <el-button @click="activityDialog = false">取消</el-button>
+              <el-button type="primary" @click="saveActivity">保存</el-button>
+            </template>
+          </el-dialog>
+        </div>
+
+        <!-- 优惠券管理 -->
+        <div v-if="currentPage === 'coupons'">
+          <!-- 统计概览 -->
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px">
+            <div style="background:#fff;padding:18px 20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+              <div style="font-size:13px;color:#909399;margin-bottom:6px">优惠券模板</div>
+              <div style="font-size:26px;font-weight:700;color:#303133">{{ couponTemplates.length }}</div>
+            </div>
+            <div style="background:#fff;padding:18px 20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+              <div style="font-size:13px;color:#909399;margin-bottom:6px">已发放</div>
+              <div style="font-size:26px;font-weight:700;color:#67C23A">{{ couponStats.total_issued || 0 }}</div>
+            </div>
+            <div style="background:#fff;padding:18px 20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+              <div style="font-size:13px;color:#909399;margin-bottom:6px">已核销</div>
+              <div style="font-size:26px;font-weight:700;color:#409EFF">{{ couponStats.used || 0 }}</div>
+            </div>
+            <div style="background:#fff;padding:18px 20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+              <div style="font-size:13px;color:#909399;margin-bottom:6px">待使用</div>
+              <div style="font-size:26px;font-weight:700;color:#E6A23C">{{ (couponStats.total_issued||0) - (couponStats.used||0) }}</div>
+            </div>
+          </div>
+
+          <!-- 模板管理 -->
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
+              <span>🎫 优惠券模板</span>
+              <el-button type="primary" @click="openCouponDialog()" size="small">+ 创建模板</el-button>
+            </div>
+            <!-- 有数据 -->
+            <el-table v-if="couponTemplates.length > 0" :data="couponTemplates" stripe size="default">
+              <el-table-column prop="name" label="名称" min-width="130" />
+              <el-table-column label="优惠类型" width="100">
+                <template #default="{row}">
+                  <el-tag :type="row.discount_type === 'cash' ? 'danger' : row.discount_type === 'discount' ? 'warning' : ''" size="small">
+                    {{ row.discount_type === 'cash' ? '满减' : row.discount_type === 'discount' ? '折扣' : '赠品' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="面额" width="110">
+                <template #default="{row}">
+                  <span v-if="row.discount_type === 'cash'" style="color:#F56C6C;font-weight:600">¥{{ row.discount_value }}</span>
+                  <span v-else-if="row.discount_type === 'discount'" style="color:#E6A23C;font-weight:600">{{ row.discount_value }}折</span>
+                  <span v-else>{{ row.value || '-' }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="使用条件" width="120">
+                <template #default="{row}">
+                  {{ row.min_amount ? `满¥${row.min_amount}可用` : '无门槛' }}
+                </template>
+              </el-table-column>
+              <el-table-column label="适用商户" width="120">
+                <template #default="{row}">
+                  <span v-if="row.merchant_name">{{ row.merchant_name }}</span>
+                  <el-tag v-else type="info" size="small">全园区</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="有效期" width="90">
+                <template #default="{row}">
+                  {{ row.valid_days }}天
+                </template>
+              </el-table-column>
+              <el-table-column label="状态" width="80">
+                <template #default="{row}">
+                  <el-tag :type="row.status == 1 ? 'success' : 'info'" size="small">
+                    {{ row.status == 1 ? '启用' : '停用' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="160" fixed="right">
+                <template #default="{row}">
+                  <el-button type="primary" text size="small" @click="batchIssueCoupon(row.id)">📤 发放</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+            <!-- 空状态 -->
+            <div v-else style="text-align:center;padding:60px 0">
+              <el-empty description="还没有创建任何优惠券模板">
+                <el-button type="primary" @click="openCouponDialog()">立即创建</el-button>
+              </el-empty>
+            </div>
+          </div>
+
+          <!-- 核销验券 -->
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-title">✅ 核销验券</div>
+            <div style="display:flex;gap:12px;align-items:center;max-width:600px;flex-wrap:wrap">
+              <el-select v-model="verifyMerchantId" placeholder="选择核销商户" clearable style="width:180px" size="large">
+                <el-option v-for="m in merchants" :key="m.id" :label="m.name" :value="m.id" />
+              </el-select>
+              <el-input v-model="verifyCode" placeholder="输入或扫描券码" clearable size="large" @keyup.enter="verifyCoupon" style="flex:1;min-width:180px">
+                <template #prefix><span>🎫</span></template>
+              </el-input>
+              <el-button type="success" @click="verifyCoupon" size="large" :disabled="!verifyCode">核销</el-button>
+            </div>
+            <!-- 最近核销记录 -->
+            <div v-if="verifyHistory.length > 0" style="margin-top:16px">
+              <div style="font-size:13px;color:#909399;margin-bottom:10px">最近核销</div>
+              <div v-for="(item,i) in verifyHistory" :key="i"
+                   style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f9f9f9;border-radius:8px;margin-bottom:6px;font-size:13px">
+                <div>
+                  <strong>{{ item.coupon_name || item.name || '优惠券' }}</strong>
+                  <span style="color:#909399;margin-left:10px">{{ item.member_name || item.phone || '会员' }}</span>
+                </div>
+                <span style="color:#67C23A">{{ formatTime(item.verify_time) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 发放记录 -->
+          <div class="card">
+            <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
+              <span>📋 发放记录</span>
+              <el-button text size="small" @click="loadIssueRecords" :loading="issueLoading">刷新</el-button>
+            </div>
+            <el-table v-if="issueRecords.length > 0" :data="issueRecords" size="small">
+              <el-table-column prop="name" label="券名" min-width="120" />
+              <el-table-column prop="member_name" label="领取人" width="120">
+                <template #default="{row}">
+                  {{ row.nickname || row.phone || row.member_name || '-' }}
+                </template>
+              </el-table-column>
+              <el-table-column label="状态" width="80">
+                <template #default="{row}">
+                  <el-tag :type="row.status === 'used' ? 'info' : row.status === 'unused' ? 'success' : 'warning'" size="small">
+                    {{ row.status === 'used' ? '已使用' : row.status === 'unused' ? '未使用' : '已过期' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="issued_at" label="发放时间" width="170" />
+              <el-table-column prop="expire_date" label="到期时间" width="120" />
+            </el-table>
+            <div v-else style="text-align:center;padding:30px 0">
+              <el-empty description="暂无发放记录" :image-size="60" />
+            </div>
+          </div>
+
+          <!-- 优惠券创建对话框 -->
+          <el-dialog v-model="couponDialog" title="创建优惠券模板" width="520px" destroy-on-close>
+            <el-form :model="couponForm" label-width="100px" size="default">
+              <el-form-item label="名称" required>
+                <el-input v-model="couponForm.name" placeholder="如：新客专享满减券" maxlength="30" show-word-limit />
+              </el-form-item>
+              <el-form-item label="优惠类型" required>
+                <el-radio-group v-model="couponForm.type">
+                  <el-radio value="cash">满减券（抵扣固定金额）</el-radio>
+                  <el-radio value="discount">折扣券（打N折）</el-radio>
+                  <el-radio value="gift">赠品券</el-radio>
+                </el-radio-group>
+              </el-form-item>
+              <el-form-item v-if="couponForm.type !== 'gift'" :label="couponForm.type === 'cash' ? '减免金额' : '折扣力度'" required>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <el-input-number v-model="couponForm.value" :min="0" :max="couponForm.type==='cash'?999:9.9" :precision="couponForm.type==='discount'?1:0" />
+                  <span style="color:#909399">{{ couponForm.type === 'cash' ? '元' : '折' }}</span>
+                </div>
+              </el-form-item>
+              <el-form-item v-if="couponForm.type === 'cash'" label="使用门槛">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="white-space:nowrap">满</span>
+                  <el-input-number v-model="couponForm.min_amount" :min="0" />
+                  <span style="white-space:nowrap;color:#909399">元可用</span>
+                </div>
+              </el-form-item>
+              <el-form-item label="有效天数" required>
+                <el-input-number v-model="couponForm.valid_days" :min="1" :max="365" /> 天
+              </el-form-item>
+              <el-form-item label="适用商户">
+                <el-select v-model="couponForm.merchant_id" placeholder="全园区通用" clearable style="width:100%">
+                  <el-option v-for="m in merchants" :key="m.id" :label="m.name" :value="m.id" />
+                </el-select>
+                <div style="font-size:12px;color:#909399;margin-top:4px">不选 = 全园区通用，选择后仅该商户可用</div>
+              </el-form-item>
+              <el-form-item label="描述">
+                <el-input v-model="couponForm.description" type="textarea" :rows="2" placeholder="可选：补充说明，如使用范围、限制等" />
+              </el-form-item>
+            </el-form>
+            <template #footer>
+              <el-button @click="couponDialog = false">取消</el-button>
+              <el-button type="primary" :loading="couponSaving" @click="saveCoupon">创建模板</el-button>
+            </template>
+          </el-dialog>
+
+          <!-- 发券弹窗 -->
+          <el-dialog v-model="issueDialog" title="发放优惠券" width="480px">
+            <div style="margin-bottom:16px;padding:12px 16px;background:#f5f7fa;border-radius:8px;font-size:14px">
+              发放对象：<strong style="color:#409EFF">{{ issueTo.label }}</strong>
+            </div>
+            <el-form label-width="95px" size="default">
+              <el-form-item label="选择模板" required>
+                <el-select v-model="issueForm.template_id" placeholder="请选择优惠券模板" style="width:100%">
+                  <el-option
+                    v-for="tpl in couponTemplates"
+                    :key="tpl.id"
+                    :label="`${tpl.name}（${tpl.discount_type === 'cash' ? '¥'+tpl.discount_value+'满减' : tpl.discount_value+'折'}）${tpl.min_amount ? ' 满'+tpl.min_amount+'可用' : ' 无门槛'}`"
+                    :value="tpl.id"
+                  >
+                    <div style="display:flex;justify-content:space-between;width:100%">
+                      <span>{{ tpl.name }}</span>
+                      <span style="color:#999;font-size:12px">
+                        {{ tpl.discount_type === 'cash' ? '¥'+tpl.discount_value : tpl.discount_value+'折' }} | {{ tpl.valid_days }}天有效
+                      </span>
+                    </div>
+                  </el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item v-if="couponTemplates.length === 0">
+                <el-alert type="warning" :closable="false" title="暂无可用模板，请先在「优惠券」页面创建模板" show-icon />
+              </el-form-item>
+              <el-form-item v-if="issueForm.template_id">
+                <div style="font-size:13px;color:#666;line-height:1.6">
+                  选中的模板将向 <strong>{{ issueTo.label }}</strong> 各发一张，
+                  券码自动生成，有效期自发放日起计算。
+                </div>
+              </el-form-item>
+            </el-form>
+            <template #footer>
+              <el-button @click="issueDialog = false">取消</el-button>
+              <el-button type="primary" :loading="issueLoading" :disabled="!issueForm.template_id" @click="confirmIssue">确认发放</el-button>
+            </template>
+          </el-dialog>
+
+        </div>
+
+        <!-- 内容营销 -->
+        <div v-if="currentPage === 'content'">
+          <div class="card">
+            <div class="table-toolbar">
+              <el-select v-model="articleStatus" placeholder="全部状态" clearable style="width:130px" @change="loadArticles">
+                <el-option label="草稿" value="draft" />
+                <el-option label="待审核" value="reviewing" />
+                <el-option label="已通过" value="approved" />
+                <el-option label="已发布" value="published" />
+              </el-select>
+              <div class="spacer"></div>
+              <el-button @click="openArticleDialog()">✏️ 新建推文</el-button>
+              <el-button type="primary" @click="openGenerateDialog()">✨ AI生成</el-button>
+            </div>
+            <el-table :data="articles">
+              <el-table-column prop="title" label="标题" />
+              <el-table-column label="状态" width="90">
+                <template #default="{row}">
+                  <span class="badge" :class="'badge-' + (row.status||'draft')">
+                    {{ {draft:'草稿',reviewing:'待审核',approved:'已通过',published:'已发布'}[row.status] }}
+                  </span>
+                </template>
+              </el-table-column>
+              <el-table-column prop="created_at" label="创建时间" width="160" />
+              <el-table-column label="操作" width="200">
+                <template #default="{row}">
+                  <el-button text size="small" @click="openArticleDialog(row)">编辑</el-button>
+                  <el-button text size="small" type="warning" @click="reviewArticle(row.id, true)"
+                    v-if="row.status==='reviewing'">通过</el-button>
+                  <el-button text size="small" type="success" @click="publishArticle(row.id)"
+                    v-if="row.status==='approved'">发布</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+          <!-- 推文编辑对话框 -->
+          <el-dialog v-model="articleDialog" title="编辑推文" width="700px">
+            <el-form :model="articleForm" label-width="80px">
+              <el-form-item label="标题"><el-input v-model="articleForm.title" /></el-form-item>
+              <el-form-item label="摘要"><el-input v-model="articleForm.summary" type="textarea" :rows="2" /></el-form-item>
+              <el-form-item label="正文"><el-input v-model="articleForm.content" type="textarea" :rows="8" /></el-form-item>
+              <el-form-item label="发布平台">
+                <el-checkbox-group v-model="articleForm.platforms">
+                  <el-checkbox value="mp">公众号（自动发布）</el-checkbox>
+                  <el-checkbox value="douyin">抖音（生成文案，手动发）</el-checkbox>
+                  <el-checkbox value="xiaohongshu">小红书（生成文案，手动发）</el-checkbox>
+                </el-checkbox-group>
+              </el-form-item>
+              <el-form-item label="定时发布">
+                <el-date-picker v-model="articleForm.publish_at" type="datetime" placeholder="不设置则立即发布" />
+              </el-form-item>
+            </el-form>
+            <template #footer>
+              <el-button @click="articleDialog = false">取消</el-button>
+              <el-button @click="saveArticle('reviewing')">提交审核</el-button>
+              <el-button type="primary" @click="saveArticle('draft')">保存草稿</el-button>
+            </template>
+          </el-dialog>
+          <!-- AI生成对话框 -->
+          <el-dialog v-model="generateDialog" title="✨ AI生成推文" width="500px">
+            <el-form label-width="90px">
+              <el-form-item label="内容来源">
+                <el-select v-model="generateForm.source_type" @change="loadGenerateSources">
+                  <el-option label="活动" value="activity" />
+                  <el-option label="商户" value="merchant" />
+                  <el-option label="手动输入" value="manual" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="选择来源" v-if="generateForm.source_type !== 'manual'">
+                <el-select v-model="generateForm.source_id">
+                  <el-option v-for="s in generateSources" :key="s.id" :label="s.name || s.title" :value="s.id" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="自定义标题">
+                <el-input v-model="generateForm.title" placeholder="留空自动生成" />
+              </el-form-item>
+            </el-form>
+            <template #footer>
+              <el-button @click="generateDialog = false">取消</el-button>
+              <el-button type="primary" @click="doGenerate" :loading="generating">生成</el-button>
+            </template>
+          </el-dialog>
+        </div>
+
+        <!-- 数据分析 -->
+        <div v-if="currentPage === 'analytics'">
+          <div style="margin-bottom:16px;display:flex;gap:12px;align-items:center">
+            <span style="color:#606266;font-size:14px">时间范围：</span>
+            <el-radio-group v-model="analyticsDays" @change="loadAnalytics">
+              <el-radio-button :value="7">近7天</el-radio-button>
+              <el-radio-button :value="30">近30天</el-radio-button>
+              <el-radio-button :value="90">近90天</el-radio-button>
+            </el-radio-group>
+          </div>
+          <div class="chart-grid">
+            <div class="card">
+              <div class="card-title">📈 客流趋势</div>
+              <div id="analyticsVisitChart" class="chart-box"></div>
+            </div>
+            <div class="card">
+              <div class="card-title">👥 会员增长</div>
+              <div id="analyticsMemberChart" class="chart-box"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">📊 渠道效果对比</div>
+            <div id="analyticsChannelChart" style="height:200px"></div>
+          </div>
+        </div>
+
+        <!-- 广告/轮播图管理 -->
+        <div v-if="currentPage === 'banners'">
+          <div class="card">
+            <div class="table-toolbar">
+              <span style="color:#606266;font-size:14px">在后台创建广告，游客端H5首页轮播图实时更新</span>
+              <div class="spacer"></div>
+              <el-button type="primary" @click="openBannerDialog()">+ 新建广告</el-button>
+            </div>
+            <el-table :data="banners" v-loading="bannersLoading">
+              <el-table-column prop="id" label="ID" width="60" />
+              <el-table-column prop="title" label="标题" />
+              <el-table-column label="跳转" width="120">
+                <template #default="{row}">
+                  {{ {none:'无',activity:'活动',coupon:'优惠券',merchant:'商户',url:'外链'}[row.link_type] || row.link_type }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="sort_order" label="排序" width="70" />
+              <el-table-column label="图片" width="100">
+                <template #default="{row}">
+                  <img v-if="row.image_url" :src="row.image_url" style="width:60px;height:36px;object-fit:cover;border-radius:4px;border:1px solid #ebeef5" @error="$event.target.style.display='none'" />
+                  <span v-else style="color:#c0c4cc;font-size:12px">渐变色</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="状态" width="80">
+                <template #default="{row}">
+                  <el-tag :type="row.status==1?'success':'danger'" size="small">
+                    {{ row.status==1?'启用':'停用' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="created_at" label="创建时间" width="160" />
+              <el-table-column label="操作" width="160">
+                <template #default="{row}">
+                  <el-button text size="small" @click="openBannerDialog(row)">编辑</el-button>
+                  <el-button text size="small" type="danger" @click="deleteBanner(row.id)">删除</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+          <!-- 广告编辑对话框 -->
+          <el-dialog v-model="bannerDialog" :title="bannerForm.id?'编辑广告':'新建广告'" width="550px">
+            <el-form :model="bannerForm" label-width="90px">
+              <el-form-item label="标题" required>
+                <el-input v-model="bannerForm.title" placeholder="广告标题" />
+              </el-form-item>
+              <el-form-item label="广告图片">
+                <div style="display:flex;align-items:flex-start;gap:12px;width:100%">
+                  <el-upload
+                    :action="'/api/upload/image'"
+                    :headers="uploadHeaders"
+                    :show-file-list="false"
+                    :on-success="onBannerImageSuccess"
+                    :on-error="onBannerImageError"
+                    :before-upload="beforeBannerImageUpload"
+                    accept=".png,.jpg,.jpeg,.gif,.webp,.svg"
+                    style="flex-shrink:0">
+                    <el-button :icon="Upload" size="small">上传图片</el-button>
+                  </el-upload>
+                  <div style="flex:1;min-width:0">
+                    <el-input v-if="!bannerForm.image_url || bannerForm.image_url.startsWith('/uploads/')" disabled placeholder="上传后自动填入" />
+                    <el-input v-else v-model="bannerForm.image_url" placeholder="或手动输入外部图片URL" />
+                  </div>
+                </div>
+                <div v-if="bannerForm.image_url" style="margin-top:8px">
+                  <img :src="bannerForm.image_url" style="max-width:100%;max-height:120px;border-radius:6px;border:1px solid #ebeef5;object-fit:cover" @error="$event.target.style.display='none'" />
+                </div>
+              </el-form-item>
+              <el-form-item label="跳转类型">
+                <el-select v-model="bannerForm.link_type" style="width:100%">
+                  <el-option label="无跳转" value="none" />
+                  <el-option label="跳转活动" value="activity" />
+                  <el-option label="跳转优惠券" value="coupon" />
+                  <el-option label="跳转商户" value="merchant" />
+                  <el-option label="外部链接" value="url" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="跳转目标ID" v-if="['activity','coupon','merchant'].includes(bannerForm.link_type)">
+                <el-input-number v-model="bannerForm.link_id" :min="1" placeholder="活动/优惠券/商户的ID" style="width:100%" />
+              </el-form-item>
+              <el-form-item label="外部URL" v-if="bannerForm.link_type==='url'">
+                <el-input v-model="bannerForm.link_url" placeholder="https://..." />
+              </el-form-item>
+              <el-form-item label="排序">
+                <el-input-number v-model="bannerForm.sort_order" :min="0" style="width:100%" />
+              </el-form-item>
+              <el-form-item label="状态">
+                <el-switch v-model="bannerForm.status" :active-value="1" :inactive-value="0" active-text="启用" inactive-text="停用" />
+              </el-form-item>
+            </el-form>
+            <template #footer>
+              <el-button @click="bannerDialog=false">取消</el-button>
+              <el-button type="primary" @click="saveBanner">保存</el-button>
+            </template>
+          </el-dialog>
+        </div>
+
+        <!-- 公告/通知管理 -->
+        <div v-if="currentPage === 'notices'">
+          <div class="card">
+            <div class="table-toolbar">
+              <span style="color:#606266;font-size:14px">发布公告后，游客端H5首页立即显示</span>
+              <div class="spacer"></div>
+              <el-button type="primary" @click="openNoticeDialog()">+ 新建公告</el-button>
+            </div>
+            <el-table :data="notices" v-loading="noticesLoading">
+              <el-table-column prop="id" label="ID" width="60" />
+              <el-table-column prop="title" label="标题" />
+              <el-table-column prop="content" label="内容" show-overflow-tooltip />
+              <el-table-column label="类型" width="80">
+                <template #default="{row}">
+                  <el-tag :type="{info:'',warning:'warning',urgent:'danger'}[row.type]||''" size="small">
+                    {{ {info:'通知',warning:'注意',urgent:'紧急'}[row.type]||row.type }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="弹窗" width="60">
+                <template #default="{row}">
+                  <el-tag :type="row.is_popup==1?'success':'info'" size="small">
+                    {{ row.is_popup==1?'是':'否' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="置顶" width="60">
+                <template #default="{row}">
+                  <el-tag :type="row.is_top==1?'success':'info'" size="small">
+                    {{ row.is_top==1?'是':'否' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="状态" width="80">
+                <template #default="{row}">
+                  <el-tag :type="row.status==1?'success':'danger'" size="small">
+                    {{ row.status==1?'启用':'停用' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="created_at" label="创建时间" width="160" />
+              <el-table-column label="操作" width="160">
+                <template #default="{row}">
+                  <el-button text size="small" @click="openNoticeDialog(row)">编辑</el-button>
+                  <el-button text size="small" type="danger" @click="deleteNotice(row.id)">删除</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+          <!-- 公告编辑对话框 -->
+          <el-dialog v-model="noticeDialog" :title="noticeForm.id?'编辑公告':'新建公告'" width="550px">
+            <el-form :model="noticeForm" label-width="90px">
+              <el-form-item label="标题" required>
+                <el-input v-model="noticeForm.title" placeholder="公告标题" />
+              </el-form-item>
+              <el-form-item label="内容" required>
+                <el-input v-model="noticeForm.content" type="textarea" :rows="4" placeholder="公告内容" />
+              </el-form-item>
+              <el-form-item label="类型">
+                <el-select v-model="noticeForm.type" style="width:100%">
+                  <el-option label="通知" value="info" />
+                  <el-option label="注意" value="warning" />
+                  <el-option label="紧急" value="urgent" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="弹窗推送">
+                <el-switch v-model="noticeForm.is_popup" :active-value="1" :inactive-value="0"
+                  active-text="开启（游客进入H5时自动弹窗）" inactive-text="关闭" />
+              </el-form-item>
+              <el-form-item label="置顶">
+                <el-switch v-model="noticeForm.is_top" :active-value="1" :inactive-value="0"
+                  active-text="置顶" inactive-text="不置顶" />
+              </el-form-item>
+              <el-form-item label="状态">
+                <el-switch v-model="noticeForm.status" :active-value="1" :inactive-value="0"
+                  active-text="启用" inactive-text="停用" />
+              </el-form-item>
+            </el-form>
+            <template #footer>
+              <el-button @click="noticeDialog=false">取消</el-button>
+              <el-button type="primary" @click="saveNotice">保存</el-button>
+            </template>
+          </el-dialog>
+        </div>
+
+        <!-- 系统设置 -->
+        <div v-if="currentPage === 'settings'">
+          <!-- 欢迎语配置 -->
+          <div class="card">
+            <div class="card-title">👋 欢迎语配置</div>
+            <el-alert type="info" :closable="false" style="margin-bottom:16px">
+              欢迎语在访客首次进入对话时自动发送。修改后实时生效，无需重启服务。
+            </el-alert>
+            <el-form label-width="0">
+              <el-form-item>
+                <el-input v-model="configs.welcome_msg" type="textarea" :rows="6"
+                  placeholder="请输入欢迎语内容，支持换行和emoji。&#10;例如：欢迎来到星汇广场！我是您的智能助手😊" />
+              </el-form-item>
+              <div style="display:flex;gap:8px;margin-bottom:16px">
+                <el-button type="primary" @click="saveWelcomeMsg">💾 保存欢迎语</el-button>
+                <el-button @click="welcomePreviewVisible = !welcomePreviewVisible">
+                  {{ welcomePreviewVisible ? '收起预览' : '👁️ 预览效果' }}
+                </el-button>
+              </div>
+            </el-form>
+            <!-- 联动提示 -->
+            <div class="sync-hint" v-if="welcomeSyncHint">
+              <span class="sync-icon">✅</span>
+              <span>欢迎语已更新，下一位新访客将看到新内容</span>
+            </div>
+            <!-- 预览区域 -->
+            <div v-if="welcomePreviewVisible" class="welcome-preview-box">
+              <div style="font-size:13px;color:#8c8c8c;margin-bottom:12px">📱 企微对话预览</div>
+              <div style="background:#ededed;border-radius:8px;padding:16px;min-height:120px">
+                <div class="welcome-preview-name">园区AI助手</div>
+                <div class="welcome-preview-wrap">
+                  <div class="welcome-preview-avatar">🤖</div>
+                  <div class="welcome-preview-bubble">{{ configs.welcome_msg || '（欢迎语为空）' }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 基础配置 -->
+          <div class="card" style="margin-top:16px">
+            <div class="card-title">⚙️ 基础配置</div>
+            <el-form :model="configs" label-width="130px">
+              <el-form-item label="园区名称"><el-input v-model="configs.park_name" /></el-form-item>
+              <el-form-item label="园区地址"><el-input v-model="configs.park_address" /></el-form-item>
+              <el-divider>公众号配置</el-divider>
+              <el-form-item label="公众号 AppID"><el-input v-model="configs.mp_appid" /></el-form-item>
+              <el-form-item label="公众号 AppSecret"><el-input v-model="configs.mp_appsecret" type="password" show-password /></el-form-item>
+              <el-divider>企业微信配置</el-divider>
+              <el-form-item label="企业ID (CorpID)"><el-input v-model="configs.wxwork_corpid" /></el-form-item>
+              <el-form-item label="游客端 AgentID"><el-input v-model="configs.wxwork_agentid" /></el-form-item>
+              <el-divider>通知配置</el-divider>
+              <el-form-item label="报告收件邮箱"><el-input v-model="configs.admin_email" /></el-form-item>
+              <el-form-item label="日报发送时间"><el-input v-model="configs.daily_report_time" /></el-form-item>
+              <el-form-item>
+                <el-button type="primary" @click="saveConfigs">保存配置</el-button>
+              </el-form-item>
+            </el-form>
+            <!-- 联动提示 -->
+            <div class="sync-hint" v-if="configSyncHint">
+              <span class="sync-icon">✅</span>
+              <span>配置已保存，即时生效</span>
+            </div>
+          </div>
+
+          <!-- 回复规则管理 -->
+          <div class="card" style="margin-top:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+              <div class="card-title" style="margin:0">💬 自动回复规则</div>
+              <div style="display:flex;gap:8px">
+                <el-select v-model="replyRuleFilter" placeholder="筛选类型" clearable style="width:120px" size="small">
+                  <el-option label="全部" value="" />
+                  <el-option label="问候类" value="greeting" />
+                  <el-option label="信息类" value="info" />
+                  <el-option label="导航类" value="nav" />
+                  <el-option label="其他" value="other" />
+                </el-select>
+                <el-button type="primary" :icon="Plus" @click="openReplyRuleDialog()">新增规则</el-button>
+              </div>
+            </div>
+            <el-alert type="success" :closable="false" style="margin-bottom:12px" v-if="replyRuleSyncHint">
+              ✅ 规则已保存，下一条访客消息即按新规则匹配
+            </el-alert>
+            <el-table :data="filteredReplyRules" v-loading="replyRulesLoading" style="width:100%"
+              :default-sort="{prop: 'priority', order: 'descending'}">
+              <el-table-column label="关键词" prop="keyword" width="160" />
+              <el-table-column label="匹配方式" width="100">
+                <template #default="{row}">
+                  <el-tag :type="row.match_type === 'exact' ? 'danger' : row.match_type === 'regex' ? 'warning' : ''" size="small">
+                    {{ {exact:'精确匹配', contains:'包含匹配', regex:'正则匹配'}[row.match_type] || row.match_type }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="分类" width="90" align="center">
+                <template #default="{row}">
+                  <span class="rule-category-tag" :class="'rule-category-' + (row.category || 'other')">
+                    {{ {greeting:'问候', info:'信息', nav:'导航', other:'其他'}[row.category || 'other'] || '其他' }}
+                  </span>
+                </template>
+              </el-table-column>
+              <el-table-column label="回复内容" prop="reply" min-width="250" show-overflow-tooltip />
+              <el-table-column label="优先级" prop="priority" width="80" align="center" sortable />
+              <el-table-column label="状态" width="80" align="center">
+                <template #default="{row}">
+                  <el-tag :type="row.is_active ? 'success' : 'info'" size="small">{{ row.is_active ? '启用' : '停用' }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="150" align="center">
+                <template #default="{row}">
+                  <el-button size="small" text @click="openReplyRuleDialog(row)">编辑</el-button>
+                  <el-button size="small" text type="danger" @click="deleteReplyRule(row)">删除</el-button>
+                </template>
+              </el-table-column>
+              <template #empty>
+                <el-empty description="暂无回复规则，点击上方按钮新增" :image-size="60" />
+              </template>
+            </el-table>
+
+            <!-- 测试匹配 -->
+            <div class="rule-test-box">
+              <div style="font-size:13px;font-weight:600;color:#262626;margin-bottom:8px">🧪 测试匹配</div>
+              <div class="test-input-row">
+                <el-input v-model="replyTestText" placeholder="输入一段访客可能说的话，如：有停车吗？" clearable
+                  @keyup.enter="testReplyMatch" style="flex:1" />
+                <el-button type="primary" @click="testReplyMatch" :loading="replyTestLoading">测试</el-button>
+              </div>
+              <div class="rule-test-result" v-if="replyTestResult">
+                <div v-if="replyTestResult.total === 0" class="match-item no-match">
+                  <span style="color:#ff4d4f">❌ 无匹配规则</span>
+                  <div style="font-size:12px;color:#8c8c8c;margin-top:4px">该消息不会触发自动回复，将走AI默认回复</div>
+                </div>
+                <div v-for="rule in replyTestResult.matched" :key="rule.id" class="match-item">
+                  <div>
+                    <span class="match-keyword">🔑 {{ rule.keyword }}</span>
+                    <span class="match-type">{{ {exact:'精确匹配', contains:'包含匹配', regex:'正则匹配'}[rule.match_type] }}</span>
+                    <span style="margin-left:8px;font-size:12px;color:#8c8c8c">优先级: {{ rule.priority }}</span>
+                  </div>
+                  <div class="match-reply">💬 {{ rule.reply }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 标签规则管理 -->
+          <div class="card" style="margin-top:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+              <div class="card-title" style="margin:0">🏷️ 自动标签规则</div>
+              <el-button type="primary" :icon="Plus" @click="openTagRuleDialog()">新增规则</el-button>
+            </div>
+            <el-alert type="success" :closable="false" style="margin-bottom:12px" v-if="tagRuleSyncHint">
+              ✅ 标签规则已保存，下一条访客消息即按新规则打标
+            </el-alert>
+            <el-table :data="tagRules" v-loading="tagRulesLoading" style="width:100%">
+              <el-table-column label="标签名" prop="tag_name" width="120">
+                <template #default="{row}">
+                  <el-tag size="small">{{ row.tag_name }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="触发关键词" prop="keyword" min-width="200" show-overflow-tooltip />
+              <el-table-column label="匹配方式" width="100">
+                <template #default="{row}">
+                  <el-tag :type="row.match_type === 'exact' ? 'danger' : row.match_type === 'regex' ? 'warning' : ''" size="small">
+                    {{ {exact:'精确匹配', contains:'包含匹配', regex:'正则匹配'}[row.match_type] || row.match_type }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="状态" width="80" align="center">
+                <template #default="{row}">
+                  <el-tag :type="row.is_active ? 'success' : 'info'" size="small">{{ row.is_active ? '启用' : '停用' }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="150" align="center">
+                <template #default="{row}">
+                  <el-button size="small" text @click="openTagRuleDialog(row)">编辑</el-button>
+                  <el-button size="small" text type="danger" @click="deleteTagRule(row)">删除</el-button>
+                </template>
+              </el-table-column>
+              <template #empty>
+                <el-empty description="暂无标签规则，点击上方按钮新增" :image-size="60" />
+              </template>
+            </el-table>
+
+            <!-- 测试匹配 -->
+            <div class="rule-test-box">
+              <div style="font-size:13px;font-weight:600;color:#262626;margin-bottom:8px">🧪 测试标签匹配</div>
+              <div class="test-input-row">
+                <el-input v-model="tagTestText" placeholder="输入一段访客可能说的话，如：我想吃火锅" clearable
+                  @keyup.enter="testTagMatch" style="flex:1" />
+                <el-button type="primary" @click="testTagMatch" :loading="tagTestLoading">测试</el-button>
+              </div>
+              <div class="rule-test-result" v-if="tagTestResult">
+                <div v-if="tagTestResult.tags && tagTestResult.tags.length > 0">
+                  <div style="margin-bottom:8px;font-size:13px;color:#595959">将被打上以下标签：</div>
+                  <div class="match-tags">
+                    <el-tag v-for="tag in tagTestResult.tags" :key="tag" type="success" effect="dark" size="large">{{ tag }}</el-tag>
+                  </div>
+                </div>
+                <div v-else class="match-item no-match">
+                  <span style="color:#ff4d4f">❌ 无匹配标签</span>
+                  <div style="font-size:12px;color:#8c8c8c;margin-top:4px">该消息不会触发自动标签</div>
+                </div>
+                <div v-if="tagTestResult.matched && tagTestResult.matched.length > 0" style="margin-top:12px">
+                  <div style="font-size:12px;color:#8c8c8c;margin-bottom:6px">命中规则详情：</div>
+                  <div v-for="rule in tagTestResult.matched" :key="rule.id" class="match-item" style="padding:8px 12px">
+                    <span class="match-keyword">🔑 {{ rule.keyword }}</span>
+                    <span class="match-type">{{ {exact:'精确匹配', contains:'包含匹配', regex:'正则匹配'}[rule.match_type] }}</span>
+                    → <el-tag size="small">{{ rule.tag_name }}</el-tag>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 回复规则编辑对话框 -->
+        <el-dialog v-model="replyRuleDialog" :title="replyRuleForm.id ? '编辑回复规则' : '新增回复规则'" width="600px">
+          <el-form :model="replyRuleForm" label-width="100px">
+            <el-form-item label="关键词" required><el-input v-model="replyRuleForm.keyword" placeholder="如：停车、WiFi|网络" /></el-form-item>
+            <el-form-item label="匹配方式">
+              <el-select v-model="replyRuleForm.match_type">
+                <el-option label="包含匹配" value="contains" />
+                <el-option label="精确匹配" value="exact" />
+                <el-option label="正则匹配" value="regex" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="分类">
+              <el-select v-model="replyRuleForm.category" placeholder="选择分类">
+                <el-option label="问候类" value="greeting" />
+                <el-option label="信息类" value="info" />
+                <el-option label="导航类" value="nav" />
+                <el-option label="其他" value="other" />
+              </el-select>
+              <div style="font-size:12px;color:#8c8c8c;margin-top:4px">分类用于管理后台筛选，不影响企微端匹配</div>
+            </el-form-item>
+            <el-form-item label="回复内容" required><el-input v-model="replyRuleForm.reply" type="textarea" :rows="4" placeholder="支持换行，可用 emoji" /></el-form-item>
+            <el-form-item label="优先级"><el-input-number v-model="replyRuleForm.priority" :min="0" :max="100" />
+              <span style="font-size:12px;color:#8c8c8c;margin-left:8px">数字越大优先级越高</span>
+            </el-form-item>
+            <el-form-item label="启用">
+              <el-switch v-model="replyRuleForm.is_active" :active-value="1" :inactive-value="0" />
+            </el-form-item>
+          </el-form>
+          <template #footer>
+            <el-button @click="replyRuleDialog = false">取消</el-button>
+            <el-button type="primary" @click="saveReplyRule">保存</el-button>
+          </template>
+        </el-dialog>
+
+        <!-- 标签规则编辑对话框 -->
+        <el-dialog v-model="tagRuleDialog" :title="tagRuleForm.id ? '编辑标签规则' : '新增标签规则'" width="500px">
+          <el-form :model="tagRuleForm" label-width="100px">
+            <el-form-item label="标签名" required><el-input v-model="tagRuleForm.tag_name" placeholder="如：餐饮、购物" /></el-form-item>
+            <el-form-item label="触发关键词" required><el-input v-model="tagRuleForm.keyword" placeholder="多个词用 | 分隔，如：吃饭|美食|餐厅" /></el-form-item>
+            <el-form-item label="匹配方式">
+              <el-select v-model="tagRuleForm.match_type">
+                <el-option label="包含匹配" value="contains" />
+                <el-option label="精确匹配" value="exact" />
+                <el-option label="正则匹配" value="regex" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="启用">
+              <el-switch v-model="tagRuleForm.is_active" :active-value="1" :inactive-value="0" />
+            </el-form-item>
+          </el-form>
+          <template #footer>
+            <el-button @click="tagRuleDialog = false">取消</el-button>
+            <el-button type="primary" @click="saveTagRule">保存</el-button>
+          </template>
+        </el-dialog>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const { createApp, ref, reactive, computed, onMounted, nextTick, watch } = Vue;
+
+createApp({
+  setup() {
+    // Element Plus 图标
+    const { ArrowUp, ArrowDown, Plus, Delete, Edit, View, Download, Upload, Document, Refresh, Ticket, Message } = ElementPlusIconsVue;
+    const isLoggedIn = ref(false);
+    const adminName = ref('');
+    const currentPage = ref('dashboard');
+    const sidebarCollapsed = ref(false);
+
+    // 登录
+    const loginForm = reactive({ username: 'admin', password: 'admin123' });
+    const loginLoading = ref(false);
+
+    const navGroups = [
+      { label: '概览', items: [{ key: 'dashboard', icon: '🏠', label: '仪表盘' }] },
+      { label: '运营管理', items: [
+        { key: 'members', icon: '👥', label: '会员管理' },
+        { key: 'chats', icon: '💬', label: '对话记录' },
+        { key: 'merchants', icon: '🏪', label: '商户管理' },
+        { key: 'activities', icon: '🎉', label: '活动管理' },
+        { key: 'coupons', icon: '🎫', label: '优惠券' },
+      ]},
+      { label: '内容推送', items: [
+        { key: 'banners', icon: '🖼️', label: '广告管理' },
+        { key: 'notices', icon: '📢', label: '公告管理' },
+        { key: 'content', icon: '✍️', label: '内容营销' },
+      ]},
+      { label: '营销分析', items: [
+        { key: 'analytics', icon: '📊', label: '数据分析' },
+      ]},
+      { label: '系统', items: [
+        { key: 'settings', icon: '⚙️', label: '系统设置' },
+      ]},
+    ];
+
+    const currentPageTitle = computed(() => {
+      for (const g of navGroups) {
+        const item = g.items.find(i => i.key === currentPage.value);
+        if (item) return item.label;
+      }
+      return '';
+    });
+
+    // 仪表盘
+    const dashboardData = ref({});
+    const pending = ref({ articles: 0, expiring_coupons: 0 });
+    const pendingCount = computed(() => (pending.value.articles || 0) + (pending.value.expiring_coupons || 0));
+    const visitTrend = computed(() => {
+      const d = dashboardData.value;
+      return (d.today_visits || 0) - (d.yesterday_visits || 0);
+    });
+
+    // 会员
+    const members = ref([]);
+    const membersLoading = ref(false);
+    const memberPage = ref(1);
+    const memberPageSize = ref(20);
+    const memberTotal = ref(0);
+    const memberSearch = reactive({ keyword: '', source: '', level: '', bind_status: '' });
+    const memberStats = ref({ total: 0, bound: 0, pending: 0, today_new: 0 });
+    const memberDrawer = ref(false);
+    const selectedMember = ref(null);
+    const memberDialog = ref(false);
+    const memberTableRef = ref(null);
+    const selectedMembers = ref([]);
+    const memberForm = reactive({
+      id: null,
+      phone: '',
+      nickname: '',
+      level: 'normal',
+      source: 'mp',
+      bind_qrcode: ''
+    });
+
+    // 商户管理
+    const merchants = ref([]);
+    const merchantsLoading = ref(false);
+    const merchantCategory = ref('');
+    const merchantStatus = ref('');
+    const merchantSearch = ref('');
+    const merchantPage = ref(1);
+    const merchantPageSize = ref(10);
+    const merchantTotal = ref(0);
+    const merchantStats = ref({ total: 0, active: 0, today_new: 0, avg_rating: '0.0' });
+    const merchantDialog = ref(false);
+    const merchantForm = reactive({
+      category: '',
+      status: 1,
+      rating: 0,
+      tags: []
+    });
+
+    // 上传请求头（el-upload 使用）
+    const uploadHeaders = computed(() => ({}));
+
+    // 活动
+    // 活动管理
+    const activities = ref([]);
+    const activitiesLoading = ref(false);
+    const activityStatus = ref('');
+    const activityCategory = ref('');
+    const activitySearch = ref('');
+    const activityPage = ref(1);
+    const activityPageSize = ref(10);
+    const activityTotal = ref(0);
+    const activityStats = ref({ total: 0, active: 0, ended: 0, today_signup: 0 });
+    const activityDialog = ref(false);
+    const activityForm = reactive({ 
+      id: null,
+      title: '',
+      subtitle: '',
+      content: '',
+      location: '',
+      category: '',
+      tags: '',
+      cover_image: '',
+      max_people: 0,
+      fee: 0,
+      push_channels: ['mp', 'wxwork'],
+      timeRange: null
+    });
+
+    // 优惠券
+    const couponTemplates = ref([]);
+    const couponDialog = ref(false);
+    const couponForm = reactive({ name:'', type: 'cash', value: 0, min_amount: 0, merchant_id: null, valid_days: 30, description: '' });
+    const couponSaving = ref(false);
+    const verifyCode = ref('');
+    const verifyMerchantId = ref(null);
+    const couponStats = reactive({ total_issued: 0, used: 0, unused: 0 });
+    const verifyHistory = ref([]);
+    const issueRecords = ref([]);
+
+    // 发券弹窗
+    const issueDialog = ref(false);
+    const issueTo = ref({ type: '', memberIds: [], label: '' }); // type: 'single'|'batch'|'all'
+    const issueForm = reactive({ template_id: null });
+    const issueLoading = ref(false);
+
+    // 会员详情内联发券（不弹窗，直接在侧栏完成）
+    const memberIssueTplId = ref(null);
+    const memberIssueLoading = ref(false);
+
+    // 推文
+    // 广告/轮播图管理
+    const banners = ref([]);
+    const bannersLoading = ref(false);
+    const bannerDialog = ref(false);
+    const bannerForm = reactive({ id: null, title: '', image_url: '', link_type: 'none', link_id: null, link_url: '', sort_order: 0, status: 1 });
+
+    async function loadBanners() {
+      bannersLoading.value = true;
+      try {
+        const res = await api('GET', '/banners');
+        if (res.code === 0) banners.value = res.data || [];
+      } catch (e) { console.error(e); }
+      bannersLoading.value = false;
+    }
+    function openBannerDialog(row) {
+      if (row) { Object.assign(bannerForm, { id: row.id, title: row.title, image_url: row.image_url||'', link_type: row.link_type||'none', link_id: row.link_id, link_url: row.link_url||'', sort_order: row.sort_order||0, status: row.status??1 }); }
+      else { Object.assign(bannerForm, { id: null, title: '', image_url: '', link_type: 'none', link_id: null, link_url: '', sort_order: 0, status: 1 }); }
+      bannerDialog.value = true;
+    }
+    function beforeBannerImageUpload(file) {
+      const isImage = ['image/png','image/jpeg','image/gif','image/webp','image/svg+xml'].includes(file.type);
+      const isLt5M = file.size / 1024 / 1024 < 5;
+      if (!isImage) { ElementPlus.ElMessage.error('只能上传图片文件'); return false; }
+      if (!isLt5M) { ElementPlus.ElMessage.error('图片大小不能超过5MB'); return false; }
+      return true;
+    }
+    function onBannerImageSuccess(response) {
+      if (response.code === 0) {
+        bannerForm.image_url = response.data.url;
+        ElementPlus.ElMessage.success('图片上传成功');
+      } else {
+        ElementPlus.ElMessage.error(response.msg || '上传失败');
+      }
+    }
+    function onBannerImageError() {
+      ElementPlus.ElMessage.error('图片上传失败，请重试');
+    }
+    async function saveBanner() {
+      if (!bannerForm.title) { ElementPlus.ElMessage.warning('请输入标题'); return; }
+      try {
+        const payload = { title: bannerForm.title, image_url: bannerForm.image_url, link_type: bannerForm.link_type, link_id: bannerForm.link_id, link_url: bannerForm.link_url, sort_order: bannerForm.sort_order, status: bannerForm.status };
+        let res;
+        if (bannerForm.id) res = await api('PUT', '/banners/' + bannerForm.id, payload);
+        else res = await api('POST', '/banners', payload);
+        if (res.code === 0) { ElementPlus.ElMessage.success(res.msg || '保存成功'); bannerDialog.value = false; loadBanners(); }
+        else ElementPlus.ElMessage.error(res.msg || '保存失败');
+      } catch (e) { ElementPlus.ElMessage.error('请求失败'); }
+    }
+    async function deleteBanner(id) {
+      try {
+        await ElementPlus.ElMessageBox.confirm('确定删除该广告？', '提示', { type: 'warning' });
+        const res = await api('DELETE', '/banners/' + id);
+        if (res.code === 0) { ElementPlus.ElMessage.success('已删除'); loadBanners(); }
+        else ElementPlus.ElMessage.error(res.msg || '删除失败');
+      } catch (e) { /* 取消 */ }
+    }
+
+    // 公告/通知管理
+    const notices = ref([]);
+    const noticesLoading = ref(false);
+    const noticeDialog = ref(false);
+    const noticeForm = reactive({ id: null, title: '', content: '', type: 'info', is_popup: 0, is_top: 0, status: 1 });
+
+    async function loadNotices() {
+      noticesLoading.value = true;
+      try {
+        const res = await api('GET', '/notices');
+        if (res.code === 0) notices.value = res.data || [];
+      } catch (e) { console.error(e); }
+      noticesLoading.value = false;
+    }
+    function openNoticeDialog(row) {
+      if (row) { Object.assign(noticeForm, { id: row.id, title: row.title, content: row.content, type: row.type||'info', is_popup: row.is_popup??0, is_top: row.is_top??0, status: row.status??1 }); }
+      else { Object.assign(noticeForm, { id: null, title: '', content: '', type: 'info', is_popup: 0, is_top: 0, status: 1 }); }
+      noticeDialog.value = true;
+    }
+    async function saveNotice() {
+      if (!noticeForm.title || !noticeForm.content) { ElementPlus.ElMessage.warning('请填写标题和内容'); return; }
+      try {
+        const payload = { title: noticeForm.title, content: noticeForm.content, type: noticeForm.type, is_popup: noticeForm.is_popup, is_top: noticeForm.is_top, status: noticeForm.status };
+        let res;
+        if (noticeForm.id) res = await api('PUT', '/notices/' + noticeForm.id, payload);
+        else res = await api('POST', '/notices', payload);
+        if (res.code === 0) { ElementPlus.ElMessage.success(res.msg || '保存成功'); noticeDialog.value = false; loadNotices(); }
+        else ElementPlus.ElMessage.error(res.msg || '保存失败');
+      } catch (e) { ElementPlus.ElMessage.error('请求失败'); }
+    }
+    async function deleteNotice(id) {
+      try {
+        await ElementPlus.ElMessageBox.confirm('确定删除该公告？', '提示', { type: 'warning' });
+        const res = await api('DELETE', '/notices/' + id);
+        if (res.code === 0) { ElementPlus.ElMessage.success('已删除'); loadNotices(); }
+        else ElementPlus.ElMessage.error(res.msg || '删除失败');
+      } catch (e) { /* 取消 */ }
+    }
+
+    // 推文管理
+    const articles = ref([]);
+    const articleStatus = ref('');
+    const articleDialog = ref(false);
+    const articleForm = reactive({ platforms: ['mp'] });
+    const generateDialog = ref(false);
+    const generateForm = reactive({ source_type: 'activity', source_id: null, title: '' });
+    const generateSources = ref([]);
+    const generating = ref(false);
+
+    // 数据分析
+    const analyticsDays = ref(30);
+
+    // 系统配置
+    const configs = reactive({});
+
+    // 回复规则
+    const replyRules = ref([]);
+    const replyRulesLoading = ref(false);
+    const replyRuleDialog = ref(false);
+    const replyRuleForm = reactive({ id: null, keyword: '', reply: '', match_type: 'contains', priority: 0, is_active: 1, category: 'other' });
+    const replyRuleFilter = ref('');
+    const replyRuleSyncHint = ref(false);
+    const replyTestText = ref('');
+    const replyTestResult = ref(null);
+    const replyTestLoading = ref(false);
+
+    // 标签规则
+    const tagRules = ref([]);
+    const tagRulesLoading = ref(false);
+    const tagRuleDialog = ref(false);
+    const tagRuleForm = reactive({ id: null, tag_name: '', keyword: '', match_type: 'contains', is_active: 1 });
+    const tagRuleSyncHint = ref(false);
+    const tagTestText = ref('');
+    const tagTestResult = ref(null);
+    const tagTestLoading = ref(false);
+
+    // 欢迎语
+    const welcomePreviewVisible = ref(false);
+    const welcomeSyncHint = ref(false);
+    const configSyncHint = ref(false);
+
+    // 对话记录
+    const chats = ref([]);
+    const chatsLoading = ref(false);
+    const chatTotal = ref(0);
+    const chatPage = ref(1);
+    const chatPageSize = ref(20);
+    const chatKeyword = ref('');
+    const chatChannel = ref('');
+    const chatDateRange = ref(null);
+    const chatStats = ref({});
+    const chatDrawer = ref(false);
+    const currentChat = ref({ session_id: '', logs: [], taken_over: false,
+                               takeover_by: null, takeover_at: null });
+    const takeoverLoading = ref(false);
+    const sendMessageContent = ref('');
+    const sendingMessage = ref(false);
+
+    const loadChats = async () => {
+      chatsLoading.value = true;
+      try {
+        let url = `/chats?page=${chatPage.value}&page_size=${chatPageSize.value}`;
+        if (chatKeyword.value) url += `&keyword=${encodeURIComponent(chatKeyword.value)}`;
+        if (chatChannel.value) url += `&channel=${chatChannel.value}`;
+        if (chatDateRange.value && chatDateRange.value[0]) {
+          url += `&date_from=${chatDateRange.value[0]}&date_to=${chatDateRange.value[1]}`;
+        }
+        const res = await api('GET', url);
+        if (res.code === 0) {
+          chats.value = res.data.items || [];
+          chatTotal.value = res.data.total || 0;
+        }
+      } catch (e) {
+        ElementPlus.ElMessage.error('加载对话记录失败');
+      } finally {
+        chatsLoading.value = false;
+      }
+    };
+
+    const loadChatStats = async () => {
+      try {
+        const res = await api('GET', '/chats/stats');
+        if (res.code === 0) chatStats.value = res.data;
+      } catch (e) {}
+    };
+
+    const openChatDetail = async (row) => {
+      try {
+        const sessionId = row.session_id;
+        // 同时拉对话记录 + 接管状态
+        const [detailRes, statusRes] = await Promise.all([
+          api('GET', `/chats/${encodeURIComponent(sessionId)}`),
+          api('GET', `/chats/${encodeURIComponent(sessionId)}/takeover_status`).catch(() => ({code:0,data:{taken_over:false}}))
+        ]);
+        if (detailRes.code === 0) {
+          const s = statusRes.data || {};
+          currentChat.value = {
+            ...detailRes.data,
+            taken_over: s.taken_over || false,
+            takeover_by: s.takeover_by || null,
+            takeover_at: s.takeover_at || null,
+          };
+          sendMessageContent.value = '';
+          chatDrawer.value = true;
+        }
+      } catch (e) {
+        ElementPlus.ElMessage.error('加载对话详情失败');
+      }
+    };
+
+    const takeoverSession = async () => {
+      if (!currentChat.value.session_id) return;
+      takeoverLoading.value = true;
+      try {
+        const res = await api('POST', `/chats/${encodeURIComponent(currentChat.value.session_id)}/takeover`, {
+          open_kfid: currentChat.value.open_kfid || ''
+        });
+        if (res.code === 0) {
+          currentChat.value.taken_over = true;
+          currentChat.value.takeover_at = new Date().toLocaleString('zh-CN');
+          ElementPlus.ElMessage.success('已接管！AI已静默，请手动回复游客');
+        } else {
+          ElementPlus.ElMessage.error(res.msg || '接管失败');
+        }
+      } catch (e) {
+        ElementPlus.ElMessage.error('接管请求失败');
+      } finally {
+        takeoverLoading.value = false;
+      }
+    };
+
+    const releaseSession = async () => {
+      if (!currentChat.value.session_id) return;
+      takeoverLoading.value = true;
+      try {
+        const res = await api('POST', `/chats/${encodeURIComponent(currentChat.value.session_id)}/release`, {});
+        if (res.code === 0) {
+          currentChat.value.taken_over = false;
+          currentChat.value.takeover_by = null;
+          currentChat.value.takeover_at = null;
+          ElementPlus.ElMessage.success('AI已恢复自动回复');
+        } else {
+          ElementPlus.ElMessage.error(res.msg || '释放失败');
+        }
+      } catch (e) {
+        ElementPlus.ElMessage.error('释放请求失败');
+      } finally {
+        takeoverLoading.value = false;
+      }
+    };
+
+    const sendMessageToVisitor = async () => {
+      const content = sendMessageContent.value.trim();
+      if (!content) {
+        ElementPlus.ElMessage.warning('请输入消息内容');
+        return;
+      }
+      if (!currentChat.value.session_id) return;
+      sendingMessage.value = true;
+      try {
+        // 找 open_kfid（从对话记录里取，或当前 chat 记录）
+        let openKfid = currentChat.value.open_kfid || '';
+        if (!openKfid && currentChat.value.logs) {
+          const kfLog = currentChat.value.logs.find(l => l.open_kfid);
+          if (kfLog) openKfid = kfLog.open_kfid;
+        }
+        const res = await api('POST', `/chats/${encodeURIComponent(currentChat.value.session_id)}/send`, {
+          content,
+          open_kfid: openKfid
+        });
+        if (res.code === 0) {
+          sendMessageContent.value = '';
+          ElementPlus.ElMessage.success('消息已发送！');
+          // 刷新对话记录
+          const detailRes = await api('GET', `/chats/${encodeURIComponent(currentChat.value.session_id)}`);
+          if (detailRes.code === 0) {
+            currentChat.value = { ...currentChat.value, ...detailRes.data };
+          }
+        } else {
+          ElementPlus.ElMessage.error(res.msg || '发送失败');
+        }
+      } catch (e) {
+        ElementPlus.ElMessage.error('发送请求失败');
+      } finally {
+        sendingMessage.value = false;
+      }
+    };
+
+    // 筛选后的回复规则
+    const filteredReplyRules = computed(() => {
+      if (!replyRuleFilter.value) return replyRules.value;
+      return replyRules.value.filter(r => (r.category || 'other') === replyRuleFilter.value);
+    });
+
+    // API 工具
+    const api = async (method, url, data = null) => {
+      const opts = { method, headers: { 'Content-Type': 'application/json' },
+        credentials: 'include' };
+      if (data) opts.body = JSON.stringify(data);
+      const r = await fetch('/api' + url, opts);
+      return r.json();
+    };
+
+    const handleLogin = async () => {
+      loginLoading.value = true;
+      try {
+        const res = await api('POST', '/auth/login', loginForm);
+        if (res.code === 0) {
+          isLoggedIn.value = true;
+          adminName.value = res.data.name;
+          loadDashboard();
+        } else {
+          ElementPlus.ElMessage.error(res.msg);
+        }
+      } finally { loginLoading.value = false; }
+    };
+
+    const handleUserMenu = async (cmd) => {
+      if (cmd === 'logout') {
+        await api('POST', '/auth/logout');
+        isLoggedIn.value = false;
+      }
+    };
+
+    const navigate = (page) => {
+      currentPage.value = page;
+      if (page === 'dashboard') loadDashboard();
+      else if (page === 'members') loadMembers();
+      else if (page === 'chats') { loadChats(); loadChatStats(); }
+      else if (page === 'merchants') loadMerchants();
+      else if (page === 'activities') loadActivities();
+      else if (page === 'coupons') loadCouponTemplates();
+      else if (page === 'content') loadArticles();
+      else if (page === 'analytics') loadAnalytics();
+      else if (page === 'settings') loadConfigs();
+    };
+
+    const loadDashboard = async () => {
+      const res = await api('GET', '/dashboard');
+      if (res.code === 0) {
+        dashboardData.value = res.data;
+        pending.value = res.data.pending || {};
+        nextTick(() => {
+          renderVisitChart(res.data.week_trend || []);
+          renderChannelChart(res.data.channel_stats || []);
+        });
+      }
+    };
+
+    const renderVisitChart = (data) => {
+      const el = document.getElementById('visitChart');
+      if (!el) return;
+      const chart = echarts.init(el);
+      chart.setOption({
+        grid: { top: 20, right: 20, bottom: 30, left: 40 },
+        xAxis: { type: 'category', data: data.map(d => d.date) },
+        yAxis: { type: 'value' },
+        series: [{ type: 'line', data: data.map(d => d.count),
+          smooth: true, areaStyle: { opacity: 0.1 },
+          itemStyle: { color: '#1890ff' } }]
+      });
+    };
+
+    const renderChannelChart = (data) => {
+      const el = document.getElementById('channelChart');
+      if (!el) return;
+      const chart = echarts.init(el);
+      chart.setOption({
+        legend: { bottom: 0 },
+        series: [{ type: 'pie', radius: ['40%', '70%'],
+          data: data.map(d => ({ name: d.source, value: d.count })),
+          label: { formatter: '{b}: {c}' } }]
+      });
+    };
+
+    const loadMembers = async () => {
+      membersLoading.value = true;
+      try {
+        const params = new URLSearchParams();
+        params.append('page', memberPage.value);
+        params.append('page_size', memberPageSize.value);
+        if (memberSearch.keyword) params.append('keyword', memberSearch.keyword);
+        if (memberSearch.source) params.append('source', memberSearch.source);
+        if (memberSearch.level) params.append('level', memberSearch.level);
+        if (memberSearch.bind_status) params.append('bind_status', memberSearch.bind_status);
+        
+        const res = await api('GET', `/members?${params.toString()}`);
+        if (res.code === 0) {
+          // 兼容数组和对象两种返回格式
+          if (Array.isArray(res.data)) {
+            members.value = res.data;
+            memberTotal.value = res.data.length;
+          } else {
+            members.value = res.data.items || [];
+            memberTotal.value = res.data.total || 0;
+          }
+        }
+        
+        // 加载统计数据
+        const statsRes = await api('GET', '/members/stats');
+        if (statsRes.code === 0) {
+          memberStats.value = statsRes.data || { total: 0, bound: 0, pending: 0, today_new: 0 };
+        }
+      } finally {
+        membersLoading.value = false;
+      }
+    };
+
+    const openMemberDetail = async (row) => {
+      const res = await api('GET', `/members/${row.id}`);
+      if (res.code === 0) { selectedMember.value = res.data; memberDrawer.value = true; }
+    };
+
+    // 解析 tags 字段（支持 JSON 字符串和数组）
+    const parseTags = (tags) => {
+      if (!tags) return [];
+      if (Array.isArray(tags)) return tags;
+      if (typeof tags === 'string') {
+        try {
+          const parsed = JSON.parse(tags);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          // 可能是逗号分隔的字符串
+          return tags.split(',').map(t => t.trim()).filter(Boolean);
+        }
+      }
+      return [];
+    };
+
+    // 标签颜色映射
+    const getTagType = (tag) => {
+      const map = {
+        '餐饮': 'danger', '购物': 'warning', '娱乐': 'success', '数码': '',
+        '亲子': 'success', '价格敏感': 'info', '品质追求': 'warning',
+        '咨询-地图': '', '咨询-停车': 'info', '咨询-活动': 'success',
+        '咨询-商户': 'warning', '咨询-WiFi': '', '新访客': 'info',
+        '意向高': 'danger', '意向低': 'info', '效率优先': '',
+      };
+      return map[tag] || '';
+    };
+
+    const openMemberDialog = (row = null) => {
+      // 重置表单
+      Object.assign(memberForm, {
+        id: null,
+        phone: '',
+        nickname: '',
+        level: 'normal',
+        source: 'mp',
+        bind_qrcode: ''
+      });
+      
+      if (row) {
+        // 编辑模式
+        Object.assign(memberForm, {
+          id: row.id,
+          phone: row.phone || '',
+          nickname: row.nickname || '',
+          level: row.level || 'normal',
+          source: row.source || 'mp',
+          bind_qrcode: ''
+        });
+      }
+      memberDialog.value = true;
+    };
+
+    const saveMember = async () => {
+      if (!memberForm.phone || memberForm.phone.length !== 11) {
+        ElementPlus.ElMessage.error('请输入正确的11位手机号');
+        return;
+      }
+      try {
+        const data = { ...memberForm };
+        const method = data.id ? 'PUT' : 'POST';
+        const url = data.id ? `/members/${data.id}` : '/members';
+        const res = await api(method, url, data);
+        if (res.code === 0) {
+          ElementPlus.ElMessage.success(data.id ? '更新成功' : '添加成功');
+          memberDialog.value = false;
+          loadMembers();
+          // 如果是新增且返回了二维码，显示二维码
+          if (res.data && res.data.bind_qrcode) {
+            memberForm.bind_qrcode = res.data.bind_qrcode;
+            memberDialog.value = true;
+          }
+        } else {
+          ElementPlus.ElMessage.error(res.msg || '保存失败');
+        }
+      } catch (e) {
+        ElementPlus.ElMessage.error('网络错误，保存失败');
+      }
+    };
+
+    const deleteMember = async (id) => {
+      try {
+        await ElementPlus.ElMessageBox.confirm('确定要删除该会员吗？此操作不可恢复', '提示', { type: 'warning' });
+        const res = await api('DELETE', `/members/${id}`);
+        if (res.code === 0) {
+          ElementPlus.ElMessage.success('删除成功');
+          loadMembers();
+        } else {
+          ElementPlus.ElMessage.error(res.msg || '删除失败');
+        }
+      } catch (e) {
+        // 用户取消
+      }
+    };
+
+    const exportMembers = () => {
+      window.open('/api/members/export', '_blank');
+    };
+
+    // 会员多选相关
+    const handleMemberSelectionChange = (selection) => {
+      selectedMembers.value = selection;
+    };
+
+    const handleMemberCommand = (command, row) => {
+      if (command === 'coupon') {
+        issueCouponToMember(row.id);
+      } else if (command === 'message') {
+        ElementPlus.ElMessage.info('发送消息功能开发中...');
+      } else if (command === 'delete') {
+        deleteMember(row.id);
+      }
+    };
+
+    const issueCouponToMember = (memberId) => {
+      // 打开选模板弹窗，单人发券
+      const member = members.value.find(m => m.id === memberId) || { id: memberId, nickname: '该会员' };
+      issueTo.value = { type: 'single', memberIds: [memberId], label: member.nickname || member.phone || `会员#${memberId}` };
+      issueForm.template_id = couponTemplates.value.length > 0 ? couponTemplates.value[0].id : null;
+      issueDialog.value = true;
+    };
+
+    // 会员详情内联发放——直接调接口，不弹窗
+    const inlineIssueCoupon = async (memberId) => {
+      if (!memberIssueTplId.value) {
+        ElementPlus.ElMessage.warning('请先选择优惠券模板');
+        return;
+      }
+      memberIssueLoading.value = true;
+      try {
+        const res = await api('POST', '/coupons/batch-issue', {
+          template_id: memberIssueTplId.value,
+          member_ids: [memberId]
+        });
+        if (res.code === 0) {
+          ElementPlus.ElMessage.success('优惠券已发放');
+          memberIssueTplId.value = null; // 重置选择
+          // 刷新当前会员详情的券列表
+          if (selectedMember.value && selectedMember.value.id === memberId) {
+            openMemberDetail(memberId);
+          }
+        } else {
+          ElementPlus.ElMessage.error(res.msg || '发放失败');
+        }
+      } catch (e) {
+        ElementPlus.ElMessage.error('网络错误');
+      } finally {
+        memberIssueLoading.value = false;
+      }
+    };
+
+    const batchIssueCouponToSelected = () => {
+      if (selectedMembers.value.length === 0) return;
+      const ids = selectedMembers.value.map(m => m.id);
+      issueTo.value = { type: 'batch', memberIds: ids, label: `已选 ${ids.length} 位会员` };
+      issueForm.template_id = couponTemplates.value.length > 0 ? couponTemplates.value[0].id : null;
+      issueDialog.value = true;
+    };
+
+    const confirmIssue = async () => {
+      if (!issueForm.template_id) {
+        ElementPlus.ElMessage.warning('请选择优惠券模板');
+        return;
+      }
+      issueLoading.value = true;
+      try {
+        let payload = { template_id: issueForm.template_id };
+        const { type, memberIds } = issueTo.value;
+
+        if (type === 'single') {
+          // 单人发券
+          const res = await api('POST', '/coupons/batch-issue', {
+            template_id: issueForm.template_id,
+            member_ids: memberIds
+          });
+          if (res.code === 0) {
+            ElementPlus.ElMessage.success('优惠券发放成功');
+            issueDialog.value = false;
+            // 刷新会员详情中的券列表
+            if (selectedMember.value && selectedMember.value.id === memberIds[0]) {
+              openMemberDetail(memberIds[0]);
+            }
+          } else {
+            ElementPlus.ElMessage.error(res.msg || '发放失败');
+          }
+        } else if (type === 'batch') {
+          // 批量发券（指定会员）
+          const res = await api('POST', '/coupons/batch-issue', {
+            template_id: issueForm.template_id,
+            member_ids: memberIds
+          });
+          if (res.code === 0) {
+            ElementPlus.ElMessage.success(`成功发放给 ${memberIds.length} 位会员`);
+            issueDialog.value = false;
+            selectedMembers.value = [];
+            memberTableRef.value?.clearSelection();
+          } else {
+            ElementPlus.ElMessage.error(res.msg || '发放失败');
+          }
+        } else {
+          // 按等级批量发
+          const res = await api('POST', '/coupons/batch-issue', payload);
+          if (res.code === 0) {
+            ElementPlus.ElMessage.success('批量发放成功');
+            issueDialog.value = false;
+          } else {
+            ElementPlus.ElMessage.error(res.msg || '发放失败');
+          }
+        }
+      } catch (e) {
+        ElementPlus.ElMessage.error('网络错误');
+      } finally {
+        issueLoading.value = false;
+      }
+    };
+
+    const batchDeleteMembers = async () => {
+      if (selectedMembers.value.length === 0) return;
+      try {
+        await ElementPlus.ElMessageBox.confirm(
+          `确定要删除选中的 ${selectedMembers.value.length} 位会员吗？此操作不可恢复`,
+          '警告',
+          { type: 'warning' }
+        );
+        // 逐个删除
+        for (const member of selectedMembers.value) {
+          await api('DELETE', `/members/${member.id}`);
+        }
+        ElementPlus.ElMessage.success('批量删除成功');
+        selectedMembers.value = [];
+        memberTableRef.value?.clearSelection();
+        loadMembers();
+      } catch (e) {
+        // 用户取消或出错
+      }
+    };
+
+    // 会员导入
+    const downloadMemberTemplate = () => {
+      const headers = ['手机号', '昵称', '等级(normal/vip/svip)', '渠道(mp/wxwork)'];
+      const sample = ['13800138000', '张三', 'normal', 'mp'];
+      const csv = [headers.join(','), sample.join(',')].join('\n');
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = '会员导入模板.csv';
+      link.click();
+    };
+
+    const beforeMemberImport = (file) => {
+      const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+                      file.type === 'application/vnd.ms-excel' ||
+                      file.name.endsWith('.csv');
+      if (!isExcel) {
+        ElementPlus.ElMessage.error('请上传 Excel 或 CSV 文件');
+        return false;
+      }
+      return true;
+    };
+
+    const onMemberImportSuccess = (res) => {
+      if (res.code === 0) {
+        ElementPlus.ElMessage.success(`成功导入 ${res.data.imported || 0} 个会员，待绑定 ${res.data.pending || 0} 个`);
+        loadMembers();
+      } else {
+        ElementPlus.ElMessage.error(res.msg || '导入失败');
+      }
+    };
+
+    const onMemberImportError = (err) => {
+      ElementPlus.ElMessage.error('导入失败：' + (err.message || '网络错误'));
+    };
+
+    const loadMerchants = async () => {
+      merchantsLoading.value = true;
+      try {
+        const params = new URLSearchParams();
+        if (merchantCategory.value) params.append('category', merchantCategory.value);
+        if (merchantStatus.value !== '') params.append('status', merchantStatus.value);
+        if (merchantSearch.value) params.append('keyword', merchantSearch.value);
+        params.append('page', merchantPage.value);
+        params.append('page_size', merchantPageSize.value);
+        const res = await api('GET', `/merchants?${params.toString()}`);
+        if (res.code === 0) {
+          // 兼容两种返回格式：数组 或 {items, total} 对象
+          if (Array.isArray(res.data)) {
+            merchants.value = res.data;
+            merchantTotal.value = res.data.length;
+          } else {
+            merchants.value = res.data.items || [];
+            merchantTotal.value = res.data.total || 0;
+          }
+        }
+        // 加载统计数据
+        const statsRes = await api('GET', '/merchants/stats');
+        if (statsRes.code === 0) {
+          merchantStats.value = statsRes.data || { total: 0, active: 0, today_new: 0, avg_rating: '0.0' };
+        }
+      } finally {
+        merchantsLoading.value = false;
+      }
+    };
+
+    const openMerchantDialog = (row = null) => {
+      if (row) {
+        // 编辑模式
+        Object.assign(merchantForm, {
+          ...row,
+          tags: row.tags || [],
+          rating: row.rating || 0
+        });
+      } else {
+        // 创建模式
+        Object.assign(merchantForm, {
+          id: null,
+          name: '',
+          category: '',
+          location: '',
+          floor: '',
+          open_hours: '',
+          phone: '',
+          description: '',
+          logo: '',
+          lat: '',
+          lng: '',
+          purchase_url: '',
+          rating: 0,
+          tags: [],
+          status: 1
+        });
+      }
+      merchantDialog.value = true;
+    };
+
+    const saveMerchant = async () => {
+      const data = { ...merchantForm };
+      // 处理经纬度：空字符串转为 null，避免数据库 decimal 类型报错
+      if (data.lat === '' || data.lat === undefined) data.lat = null;
+      if (data.lng === '' || data.lng === undefined) data.lng = null;
+      // 如果有值，确保是数字类型
+      if (data.lat !== null) data.lat = parseFloat(data.lat);
+      if (data.lng !== null) data.lng = parseFloat(data.lng);
+      
+      const method = data.id ? 'PUT' : 'POST';
+      const url = data.id ? `/merchants/${data.id}` : '/merchants';
+      const res = await api(method, url, data);
+      if (res.code === 0) { 
+        ElementPlus.ElMessage.success('保存成功'); 
+        merchantDialog.value = false; 
+        loadMerchants(); 
+      } else {
+        ElementPlus.ElMessage.error(res.msg);
+      }
+    };
+
+    const toggleMerchantStatus = async (row) => {
+      const newStatus = row.status === 1 ? 0 : 1;
+      const res = await api('PUT', `/merchants/${row.id}`, { status: newStatus });
+      if (res.code === 0) {
+        ElementPlus.ElMessage.success(newStatus === 1 ? '已上架' : '已下架');
+        loadMerchants();
+      } else {
+        ElementPlus.ElMessage.error(res.msg || '操作失败');
+      }
+    };
+
+    const deleteMerchant = async (id) => {
+      try {
+        await ElementPlus.ElMessageBox.confirm('确认删除该商户？此操作不可恢复', '提示', { type: 'warning' });
+        const res = await api('DELETE', `/merchants/${id}`);
+        if (res.code === 0) {
+          ElementPlus.ElMessage.success('删除成功');
+          loadMerchants();
+        } else {
+          ElementPlus.ElMessage.error(res.msg || '删除失败');
+        }
+      } catch (e) {
+        // 用户取消或请求失败
+      }
+    };
+
+    const exportMerchants = () => {
+      window.open('/api/merchants/export', '_blank');
+    };
+
+    const downloadMerchantTemplate = () => {
+      const headers = ['商户名称', '分类', '位置', '楼层', '营业时间', '联系电话', '简介', '纬度', '经度', '购买链接'];
+      const sample = ['示例餐厅', '餐饮', 'A座1楼', 'L1', '09:00-22:00', '13800138000', '一家不错的餐厅', '31.2040', '121.6088', 'https://example.com'];
+      const csv = [headers.join(','), sample.join(',')].join('\n');
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = '商户导入模板.csv';
+      link.click();
+    };
+
+    const beforeMerchantImport = (file) => {
+      const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
+      if (!isExcel) {
+        ElementPlus.ElMessage.error('请上传 Excel 或 CSV 文件');
+        return false;
+      }
+      return true;
+    };
+
+    const onMerchantImportSuccess = (res) => {
+      if (res.code === 0) {
+        ElementPlus.ElMessage.success(`导入成功，共导入 ${res.data.count} 条数据`);
+        loadMerchants();
+      } else {
+        ElementPlus.ElMessage.error(res.msg || '导入失败');
+      }
+    };
+
+    const onMerchantImportError = () => {
+      ElementPlus.ElMessage.error('导入失败，请检查文件格式');
+    };
+
+    const loadActivities = async () => {
+      activitiesLoading.value = true;
+      try {
+        const params = new URLSearchParams();
+        if (activityStatus.value) params.append('status', activityStatus.value);
+        if (activityCategory.value) params.append('category', activityCategory.value);
+        if (activitySearch.value) params.append('keyword', activitySearch.value);
+        params.append('page', activityPage.value);
+        params.append('page_size', activityPageSize.value);
+        
+        const res = await api('GET', `/activities?${params.toString()}`);
+        if (res.code === 0) {
+          // 兼容数组和对象两种返回格式
+          if (Array.isArray(res.data)) {
+            activities.value = res.data;
+            activityTotal.value = res.data.length;
+          } else {
+            activities.value = res.data.items || [];
+            activityTotal.value = res.data.total || 0;
+          }
+        }
+        
+        // 加载统计数据
+        const statsRes = await api('GET', '/activities/stats');
+        if (statsRes.code === 0) {
+          activityStats.value = statsRes.data || { total: 0, active: 0, ended: 0, today_signup: 0 };
+        }
+      } finally {
+        activitiesLoading.value = false;
+      }
+    };
+
+    const openActivityDialog = (row = null) => {
+      // 先重置所有字段
+      Object.assign(activityForm, { 
+        id: null,
+        title: '',
+        subtitle: '',
+        content: '',
+        location: '',
+        category: '',
+        tags: '',
+        cover_image: '',
+        max_people: 0,
+        fee: 0,
+        push_channels: ['mp', 'wxwork'],
+        timeRange: null
+      });
+      
+      if (row) {
+        // 编辑模式 - 复制行数据
+        Object.assign(activityForm, {
+          id: row.id,
+          title: row.title || '',
+          subtitle: row.subtitle || '',
+          content: row.content || '',
+          location: row.location || '',
+          category: row.category || '',
+          tags: row.tags || '',
+          cover_image: row.cover_image || row.cover_img || '',
+          max_people: row.max_people || 0,
+          fee: row.fee || 0,
+          push_channels: row.push_channels || ['mp', 'wxwork'],
+          timeRange: row.start_at && row.end_at ? [row.start_at, row.end_at] : null
+        });
+      }
+      activityDialog.value = true;
+    };
+
+    const saveActivity = async () => {
+      try {
+        const data = { ...activityForm };
+        if (data.timeRange) { data.start_at = data.timeRange[0]; data.end_at = data.timeRange[1]; }
+        const method = data.id ? 'PUT' : 'POST';
+        const url = data.id ? `/activities/${data.id}` : '/activities';
+        const res = await api(method, url, data);
+        if (res.code === 0) {
+          ElementPlus.ElMessage.success('保存成功');
+          activityDialog.value = false;
+          loadActivities();
+        } else {
+          ElementPlus.ElMessage.error(res.msg || '保存失败');
+        }
+      } catch (e) {
+        ElementPlus.ElMessage.error('网络错误，保存失败');
+      }
+    };
+
+    const publishActivity = async (id) => {
+      const res = await api('POST', `/activities/${id}/publish`);
+      ElementPlus.ElMessage.success(res.msg || '已发布');
+      loadActivities();
+    };
+
+    const deleteActivity = async (id) => {
+      try {
+        await ElementPlus.ElMessageBox.confirm('确定要删除这个活动吗？', '提示', { type: 'warning' });
+        const res = await api('DELETE', `/activities/${id}`);
+        if (res.code === 0) {
+          ElementPlus.ElMessage.success('删除成功');
+          loadActivities();
+        } else {
+          ElementPlus.ElMessage.error(res.msg || '删除失败');
+        }
+      } catch (e) {
+        // 用户取消
+      }
+    };
+
+    // 活动导入
+    const downloadActivityTemplate = () => {
+      const headers = ['活动标题', '副标题', '分类(family/food/market/show/lecture/sports/other)', '开始时间(YYYY-MM-DD HH:MM)', '结束时间', '地点', '限制人数', '费用(元)', '标签(逗号分隔)', '活动详情'];
+      const sample = ['周末亲子手工课', '和孩子一起做陶艺', 'family', '2026-04-15 14:00', '2026-04-15 16:00', 'A座3楼活动室', '20', '0', '亲子,手工,周末', '活动详情描述...'];
+      const csv = [headers.join(','), sample.join(',')].join('\n');
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = '活动导入模板.csv';
+      link.click();
+    };
+
+    const beforeActivityImport = (file) => {
+      const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+                      file.type === 'application/vnd.ms-excel' ||
+                      file.name.endsWith('.csv');
+      if (!isExcel) {
+        ElementPlus.ElMessage.error('请上传 Excel 或 CSV 文件');
+        return false;
+      }
+      return true;
+    };
+
+    const onActivityImportSuccess = (res) => {
+      if (res.code === 0) {
+        ElementPlus.ElMessage.success(`成功导入 ${res.data.imported || 0} 个活动`);
+        loadActivities();
+      } else {
+        ElementPlus.ElMessage.error(res.msg || '导入失败');
+      }
+    };
+
+    const onActivityImportError = (err) => {
+      ElementPlus.ElMessage.error('导入失败：' + (err.message || '网络错误'));
+    };
+
+    const generateFromActivity = (row) => {
+      generateForm.source_type = 'activity';
+      generateForm.source_id = row.id;
+      generateForm.title = '';
+      generateSources.value = activities.value;
+      generateDialog.value = true;
+    };
+
+    const loadCouponTemplates = async () => {
+      try {
+        const res = await api('GET', '/coupons/templates');
+        if (res.code === 0) {
+          couponTemplates.value = (res.data || []).map(t => ({
+            ...t,
+            discount_type: t.discount_type || t.type || 'cash',
+            discount_value: t.discount_value ?? t.value ?? 0,
+            min_amount: t.min_amount || 0,
+          }));
+        }
+      } catch(e) { /* 静默 */ }
+      // 加载统计
+      loadCouponStats();
+    };
+
+    const loadCouponStats = async () => {
+      try {
+        const res = await api('GET', '/coupons/stats');
+        if (res.code === 0 && res.data) Object.assign(couponStats, res.data);
+      } catch(e) { /* 演示模式可能无此接口 */ }
+    };
+
+    const openCouponDialog = () => {
+      Object.assign(couponForm, { name:'',type:'cash',value:20,min_amount:100,merchant_id:null,valid_days:30,description:'' });
+      couponDialog.value = true;
+    };
+
+    const saveCoupon = async () => {
+      if (!couponForm.name.trim()) return ElementPlus.ElMessage.warning('请输入优惠券名称');
+      if (!couponForm.type) return ElementPlus.ElMessage.warning('请选择优惠类型');
+      if (couponForm.type !== 'gift' && !couponForm.value) return ElementPlus.ElMessage.warning('请填写优惠金额/折扣');
+      
+      couponSaving.value = true;
+      try {
+        // 后端期望字段名：type, value（与DB一致）
+        const res = await api('POST', '/coupons/templates', couponForm);
+        if (res.code === 0) {
+          ElementPlus.ElMessage.success('模板创建成功！');
+          couponDialog.value = false;
+          loadCouponTemplates();
+        } else {
+          ElementPlus.ElMessage.error(res.msg || '创建失败');
+        }
+      } catch(e) {
+        ElementPlus.ElMessage.error('网络错误');
+      } finally {
+        couponSaving.value = false;
+      }
+    };
+
+    const batchIssueCoupon = (templateId) => {
+      issueTo.value = { type: 'all', memberIds: [], label: '全部会员' };
+      issueForm.template_id = templateId;
+      issueDialog.value = true;
+    };
+
+    const verifyCoupon = async () => {
+      if (!verifyCode.value.trim()) return;
+      try {
+        const payload = { code: verifyCode.value.trim() };
+        if (verifyMerchantId.value) payload.merchant_id = verifyMerchantId.value;
+        const res = await api('POST', '/coupons/verify', payload);
+        if (res.code === 0) {
+          ElementPlus.ElMessage.success(`✅ 核销成功：${res.data.name || res.data.coupon}`);
+          verifyHistory.value.unshift({ ...res.data, verify_time: new Date().toISOString() });
+          if (verifyHistory.value.length > 10) verifyHistory.value.pop();
+          verifyCode.value = '';
+        } else {
+          ElementPlus.ElMessage.error(res.msg || '核销失败');
+        }
+      } catch(e) {
+        ElementPlus.ElMessage.error('网络错误');
+      }
+    };
+
+    const loadIssueRecords = async () => {
+      issueLoading.value = true;
+      try {
+        const res = await api('GET', '/coupons/list?limit=50');
+        if (res.code === 0) issueRecords.value = res.data?.items || res.data || [];
+      } catch(e) { /* 静默 */ } finally {
+        issueLoading.value = false;
+      }
+    };
+
+    const formatTime = (t) => {
+      if (!t) return '-';
+      const d = new Date(t);
+      return `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    };
+
+    const loadArticles = async () => {
+      const p = articleStatus.value ? `?status=${articleStatus.value}` : '';
+      const res = await api('GET', `/articles${p}`);
+      if (res.code === 0) articles.value = res.data.items;
+    };
+
+    const openArticleDialog = (row = null) => {
+      Object.assign(articleForm, row || { title:'',summary:'',content:'',platforms:['mp'],publish_at:null });
+      articleDialog.value = true;
+    };
+
+    const saveArticle = async (status) => {
+      const data = { ...articleForm, status };
+      const method = data.id ? 'PUT' : 'POST';
+      const url = data.id ? `/articles/${data.id}` : '/articles';
+      const res = await api(method, url, data);
+      if (res.code === 0) { ElementPlus.ElMessage.success('保存成功'); articleDialog.value = false; loadArticles(); }
+    };
+
+    const reviewArticle = async (id, approved) => {
+      await api('POST', `/articles/${id}/review`, { approved });
+      ElementPlus.ElMessage.success(approved ? '已通过' : '已退回');
+      loadArticles();
+    };
+
+    const publishArticle = async (id) => {
+      const res = await api('POST', `/articles/${id}/publish`);
+      ElementPlus.ElMessage.success(res.msg);
+      loadArticles();
+    };
+
+    const openGenerateDialog = () => {
+      generateForm.source_type = 'activity';
+      generateForm.source_id = null;
+      generateForm.title = '';
+      generateSources.value = activities.value;
+      generateDialog.value = true;
+    };
+
+    const loadGenerateSources = async () => {
+      if (generateForm.source_type === 'activity') {
+        generateSources.value = activities.value;
+      } else if (generateForm.source_type === 'merchant') {
+        const res = await api('GET', '/merchants');
+        if (res.code === 0) generateSources.value = res.data;
+      }
+    };
+
+    const doGenerate = async () => {
+      generating.value = true;
+      try {
+        const res = await api('POST', '/articles/generate', generateForm);
+        if (res.code === 0) {
+          Object.assign(articleForm, res.data);
+          generateDialog.value = false;
+          articleDialog.value = true;
+          ElementPlus.ElMessage.success('生成成功，请编辑后提交审核');
+        }
+      } finally { generating.value = false; }
+    };
+
+    const loadAnalytics = async () => {
+      const res = await api('GET', `/analytics/overview?days=${analyticsDays.value}`);
+      if (res.code === 0) {
+        nextTick(() => {
+          const vt = res.data.visit_trend || [];
+          const mg = res.data.member_growth || [];
+          const ca = res.data.channel_analysis || [];
+
+          const renderLine = (id, data, color) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const chart = echarts.init(el);
+            chart.setOption({
+              grid: { top: 20, right: 20, bottom: 30, left: 40 },
+              xAxis: { type: 'category', data: data.map(d => d.date) },
+              yAxis: { type: 'value' },
+              series: [{ type: 'line', data: data.map(d => d.count),
+                smooth: true, itemStyle: { color } }]
+            });
+          };
+          renderLine('analyticsVisitChart', vt, '#1890ff');
+          renderLine('analyticsMemberChart', mg, '#52c41a');
+
+          const cel = document.getElementById('analyticsChannelChart');
+          if (cel) {
+            const chart = echarts.init(cel);
+            chart.setOption({
+              xAxis: { type: 'category', data: ca.map(d => d.source) },
+              yAxis: { type: 'value' },
+              series: [{ type: 'bar', data: ca.map(d => d.count),
+                itemStyle: { color: '#722ed1' } }]
+            });
+          }
+        });
+      }
+    };
+
+    const loadConfigs = async () => {
+      const res = await api('GET', '/configs');
+      if (res.code === 0) Object.assign(configs, res.data);
+      // 同时加载回复规则和标签规则
+      loadReplyRules();
+      loadTagRules();
+    };
+
+    const saveConfigs = async () => {
+      const res = await api('PUT', '/configs', configs);
+      if (res.code === 0) {
+        ElementPlus.ElMessage.success('配置已保存');
+        configSyncHint.value = true;
+        setTimeout(() => { configSyncHint.value = false; }, 5000);
+      } else {
+        ElementPlus.ElMessage.error(res.msg || '保存失败');
+      }
+    };
+
+    const saveWelcomeMsg = async () => {
+      if (!configs.welcome_msg || !configs.welcome_msg.trim()) {
+        ElementPlus.ElMessage.warning('欢迎语不能为空');
+        return;
+      }
+      const res = await api('PUT', '/configs', { welcome_msg: configs.welcome_msg });
+      if (res.code === 0) {
+        ElementPlus.ElMessage.success('欢迎语已保存');
+        welcomeSyncHint.value = true;
+        setTimeout(() => { welcomeSyncHint.value = false; }, 5000);
+      } else {
+        ElementPlus.ElMessage.error(res.msg || '保存失败');
+      }
+    };
+
+    // ★ 回复规则管理
+    const loadReplyRules = async () => {
+      replyRulesLoading.value = true;
+      try {
+        const res = await api('GET', '/reply-rules');
+        if (res.code === 0) replyRules.value = res.data || [];
+      } catch (e) { console.error('加载回复规则失败', e); }
+      finally { replyRulesLoading.value = false; }
+    };
+
+    const openReplyRuleDialog = (row = null) => {
+      if (row) {
+        Object.assign(replyRuleForm, { id: row.id, keyword: row.keyword, reply: row.reply, match_type: row.match_type, priority: row.priority, is_active: row.is_active, category: row.category || 'other' });
+      } else {
+        Object.assign(replyRuleForm, { id: null, keyword: '', reply: '', match_type: 'contains', priority: 0, is_active: 1, category: 'other' });
+      }
+      replyRuleDialog.value = true;
+    };
+
+    const saveReplyRule = async () => {
+      if (!replyRuleForm.keyword || !replyRuleForm.reply) {
+        ElementPlus.ElMessage.warning('关键词和回复内容不能为空');
+        return;
+      }
+      const url = replyRuleForm.id ? `/reply-rules/${replyRuleForm.id}` : '/reply-rules';
+      const method = replyRuleForm.id ? 'PUT' : 'POST';
+      const res = await api(method, url, { ...replyRuleForm });
+      if (res.code === 0) {
+        ElementPlus.ElMessage.success('保存成功');
+        replyRuleDialog.value = false;
+        replyRuleSyncHint.value = true;
+        setTimeout(() => { replyRuleSyncHint.value = false; }, 5000);
+        loadReplyRules();
+      } else {
+        ElementPlus.ElMessage.error(res.msg || '保存失败');
+      }
+    };
+
+    const testReplyMatch = async () => {
+      if (!replyTestText.value.trim()) {
+        ElementPlus.ElMessage.warning('请输入测试文字');
+        return;
+      }
+      replyTestLoading.value = true;
+      try {
+        const res = await api('POST', '/reply-rules/test-match', { text: replyTestText.value });
+        if (res.code === 0) {
+          replyTestResult.value = res.data;
+        } else {
+          ElementPlus.ElMessage.error(res.msg || '测试失败');
+        }
+      } catch (e) {
+        ElementPlus.ElMessage.error('测试请求失败');
+      } finally {
+        replyTestLoading.value = false;
+      }
+    };
+
+    const deleteReplyRule = async (row) => {
+      try {
+        await ElementPlus.ElMessageBox.confirm(`确定删除规则"${row.keyword}"？`, '确认删除', { type: 'warning' });
+        const res = await api('DELETE', `/reply-rules/${row.id}`);
+        if (res.code === 0) {
+          ElementPlus.ElMessage.success('已删除');
+          loadReplyRules();
+        }
+      } catch (e) { /* 取消 */ }
+    };
+
+    // ★ 标签规则管理
+    const loadTagRules = async () => {
+      tagRulesLoading.value = true;
+      try {
+        const res = await api('GET', '/tag-rules');
+        if (res.code === 0) tagRules.value = res.data || [];
+      } catch (e) { console.error('加载标签规则失败', e); }
+      finally { tagRulesLoading.value = false; }
+    };
+
+    const openTagRuleDialog = (row = null) => {
+      if (row) {
+        Object.assign(tagRuleForm, { id: row.id, tag_name: row.tag_name, keyword: row.keyword, match_type: row.match_type, is_active: row.is_active });
+      } else {
+        Object.assign(tagRuleForm, { id: null, tag_name: '', keyword: '', match_type: 'contains', is_active: 1 });
+      }
+      tagRuleDialog.value = true;
+    };
+
+    const saveTagRule = async () => {
+      if (!tagRuleForm.tag_name || !tagRuleForm.keyword) {
+        ElementPlus.ElMessage.warning('标签名和关键词不能为空');
+        return;
+      }
+      const url = tagRuleForm.id ? `/tag-rules/${tagRuleForm.id}` : '/tag-rules';
+      const method = tagRuleForm.id ? 'PUT' : 'POST';
+      const res = await api(method, url, { ...tagRuleForm });
+      if (res.code === 0) {
+        ElementPlus.ElMessage.success('保存成功');
+        tagRuleDialog.value = false;
+        tagRuleSyncHint.value = true;
+        setTimeout(() => { tagRuleSyncHint.value = false; }, 5000);
+        loadTagRules();
+      } else {
+        ElementPlus.ElMessage.error(res.msg || '保存失败');
+      }
+    };
+
+    const testTagMatch = async () => {
+      if (!tagTestText.value.trim()) {
+        ElementPlus.ElMessage.warning('请输入测试文字');
+        return;
+      }
+      tagTestLoading.value = true;
+      try {
+        const res = await api('POST', '/tag-rules/test-match', { text: tagTestText.value });
+        if (res.code === 0) {
+          tagTestResult.value = res.data;
+        } else {
+          ElementPlus.ElMessage.error(res.msg || '测试失败');
+        }
+      } catch (e) {
+        ElementPlus.ElMessage.error('测试请求失败');
+      } finally {
+        tagTestLoading.value = false;
+      }
+    };
+
+    const deleteTagRule = async (row) => {
+      try {
+        await ElementPlus.ElMessageBox.confirm(`确定删除标签规则"${row.tag_name}"？`, '确认删除', { type: 'warning' });
+        const res = await api('DELETE', `/tag-rules/${row.id}`);
+        if (res.code === 0) {
+          ElementPlus.ElMessage.success('已删除');
+          loadTagRules();
+        }
+      } catch (e) { /* 取消 */ }
+    };
+
+    // 监听页面切换，确保每次进入页面都加载数据
+    watch(currentPage, (newPage) => {
+      if (newPage === 'members') loadMembers();
+      if (newPage === 'banners') loadBanners();
+      if (newPage === 'notices') loadNotices();
+    });
+
+    // 检查登录状态
+    onMounted(async () => {
+      const res = await api('GET', '/auth/me');
+      if (res.code === 0) {
+        isLoggedIn.value = true;
+        adminName.value = res.data.name;
+        loadDashboard();
+      }
+    });
+
+    return {
+      // 图标
+      ArrowUp, ArrowDown, Plus, Delete, Edit, View, Download, Upload, Document, Refresh, Ticket, Message,
+      // 基础
+      isLoggedIn, adminName, currentPage, sidebarCollapsed, navGroups, currentPageTitle,
+      loginForm, loginLoading, handleLogin, handleUserMenu, navigate, pendingCount,
+      dashboardData, pending, visitTrend,
+      // 会员
+      members, membersLoading, memberPage, memberPageSize, memberTotal, memberSearch, memberStats,
+      memberDrawer, selectedMember, memberDialog, memberForm, memberTableRef, selectedMembers,
+      loadMembers, openMemberDetail, openMemberDialog, saveMember, deleteMember, exportMembers,
+      downloadMemberTemplate, beforeMemberImport, onMemberImportSuccess, onMemberImportError, uploadHeaders,
+      handleMemberSelectionChange, handleMemberCommand, batchIssueCouponToSelected, issueCouponToMember, batchDeleteMembers,
+      memberIssueTplId, memberIssueLoading, inlineIssueCoupon,
+      merchants, merchantsLoading, merchantCategory, merchantStatus, merchantSearch,
+      merchantPage, merchantPageSize, merchantTotal, merchantStats, merchantDialog, merchantForm,
+      loadMerchants, openMerchantDialog, saveMerchant, toggleMerchantStatus, deleteMerchant,
+      exportMerchants, downloadMerchantTemplate, beforeMerchantImport, onMerchantImportSuccess, onMerchantImportError,
+      activities, activitiesLoading, activityStatus, activityCategory, activitySearch,
+      activityPage, activityPageSize, activityTotal, activityStats, activityDialog, activityForm,
+      loadActivities, openActivityDialog, saveActivity, publishActivity, deleteActivity, generateFromActivity,
+      downloadActivityTemplate, beforeActivityImport, onActivityImportSuccess, onActivityImportError,
+      couponTemplates, couponDialog, couponForm, verifyCode, verifyMerchantId, couponSaving,
+      issueDialog, issueTo, issueForm, issueLoading,
+      couponStats, verifyHistory, issueRecords,
+      openCouponDialog, saveCoupon, batchIssueCoupon, verifyCoupon, confirmIssue,
+      loadIssueRecords, formatTime,
+      articles, articleStatus, articleDialog, articleForm,
+      generateDialog, generateForm, generateSources, generating,
+      loadArticles, openArticleDialog, saveArticle, reviewArticle, publishArticle,
+      openGenerateDialog, loadGenerateSources, doGenerate,
+      // 广告
+      banners, bannersLoading, bannerDialog, bannerForm,
+      loadBanners, openBannerDialog, saveBanner, deleteBanner,
+      // 公告
+      notices, noticesLoading, noticeDialog, noticeForm,
+      loadNotices, openNoticeDialog, saveNotice, deleteNotice,
+      analyticsDays, loadAnalytics,
+      configs, loadConfigs, saveConfigs, saveWelcomeMsg,
+      welcomePreviewVisible, welcomeSyncHint, configSyncHint,
+      replyRules, replyRulesLoading, replyRuleDialog, replyRuleForm,
+      replyRuleFilter, filteredReplyRules, replyRuleSyncHint,
+      replyTestText, replyTestResult, replyTestLoading, testReplyMatch,
+      loadReplyRules, openReplyRuleDialog, saveReplyRule, deleteReplyRule,
+      tagRules, tagRulesLoading, tagRuleDialog, tagRuleForm,
+      tagRuleSyncHint, tagTestText, tagTestResult, tagTestLoading, testTagMatch,
+      loadTagRules, openTagRuleDialog, saveTagRule, deleteTagRule,
+      // 对话记录
+      chats, chatsLoading, chatTotal, chatPage, chatPageSize, chatKeyword, chatChannel,
+      chatDateRange, chatStats, chatDrawer, currentChat,
+      takeoverLoading, sendMessageContent, sendingMessage,
+      loadChats, loadChatStats, openChatDetail,
+      takeoverSession, releaseSession, sendMessageToVisitor,
+      // 工具函数
+      parseTags, getTagType,
+    };
+  }
+}).use(ElementPlus).mount('#app');
+</script>
+</body>
+</html>
