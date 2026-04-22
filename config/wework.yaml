@@ -1,0 +1,8 @@
+## 企微自建应用配置（OpenClaw P004 Demo）
+
+wework:
+  corp_id: "ww92e11549c7d2ade0"
+  agent_id: "10000002"
+  app_secret: "EtXiES0PvnHYaVl0UzLQ_OypR_qT7yi9AsuZsFDSx7o"
+  callback_token: "f252cbb3629d8a8d9c31685ef81acea3"
+  callback_aes_key: "lQd1dvA3tiiJmi4s96IkL=uI08M9jiLR2CMUfzKzPji"
