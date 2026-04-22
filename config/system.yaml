@@ -1,0 +1,152 @@
+# 系统配置文件
+
+## 项目基本信息
+project:
+  name: "星汇广场AI助手"
+  park_name: "星汇广场"
+  version: "1.0.0"
+  environment: "development"   # 本地演示阶段，上线后改为 production
+
+## 服务器配置
+server:
+  host: "0.0.0.0"
+  port: 8082
+
+## AI引擎配置
+ai_engine:
+  provider: "openclaw"
+  model: "qwen3.5-plus"
+  api_endpoint: "https://api.openclaw.com"
+
+## 聊天入口配置
+channels:
+  - type: "wechat_work"
+    name: "企业微信机器人"
+    enabled: true
+    config:
+      corp_id: "${WECHAT_CORP_ID}"
+      agent_id: "${WECHAT_AGENT_ID}"
+      secret: "${WECHAT_SECRET}"
+      
+  - type: "h5_web"
+    name: "H5网页二维码"
+    enabled: true
+    config:
+      url: "https://your-domain.com/h5"
+
+## 标签体系配置
+tags:
+  # 第一层：预设规则标签（关键词匹配）
+  layer_1_preset:
+    enabled: true
+    confidence: 0.9
+    categories:
+      咨询意图:
+        - tag: "咨询-地图"
+          keywords: ["地图", "位置", "在哪", "怎么走", "导航", "路线", "方向"]
+        - tag: "咨询-停车"
+          keywords: ["停车", "车位", "停车费", "停车场", "地下车库", "收费标准"]
+        - tag: "咨询-活动"
+          keywords: ["活动", "优惠", "促销", "打折", "特价", "满减", "抽奖"]
+        - tag: "咨询-商户"
+          keywords: ["商家", "店铺", "品牌", "吃什么", "买什么", "营业", "几点"]
+        - tag: "咨询-WiFi"
+          keywords: ["WiFi", "wifi", "密码", "网络", "上网", "连不上"]
+        - tag: "咨询-营业时间"
+          keywords: ["几点开门", "几点关门", "营业时间", "几点到几点", "几点结束"]
+        - tag: "咨询-投诉"
+          keywords: ["投诉", "不满", "建议", "差评", "太差", "垃圾", "服务差", "脏"]
+        - tag: "咨询-其他"
+          keywords: ["你好", "谢谢", "再见", "在吗", "帮忙"]
+      兴趣偏好:
+        - tag: "餐饮"
+          keywords: ["餐厅", "吃饭", "美食", "餐饮", "小吃", "咖啡", "奶茶", "火锅", "烧烤", "日料", "甜品", "面包", "蛋糕"]
+        - tag: "购物"
+          keywords: ["买", "购物", "商店", "商品", "衣服", "包包", "鞋", "化妆品", "数码"]
+        - tag: "亲子"
+          keywords: ["孩子", "儿童", "亲子", "小朋友", "乐园", "玩具", "母婴", "宝宝"]
+        - tag: "娱乐"
+          keywords: ["游戏", "娱乐", "电影", "唱歌", "KTV", "放松", "休闲", "密室", "剧本杀"]
+        - tag: "导览"
+          keywords: ["在哪", "怎么走", "位置", "地图", "导航", "楼层", "几楼"]
+      行为特征:
+        - tag: "价格敏感"
+          keywords: ["便宜", "优惠", "打折", "省钱", "性价比", "划算", "免费", "团购", "代金券"]
+        - tag: "品质追求"
+          keywords: ["高端", "品质", "品牌", "最好", "正宗", "推荐", "人气", "网红"]
+        - tag: "效率优先"
+          keywords: ["快", "快速", "方便", "就近", "最近", "附近", "走路"]
+      意向强度:
+        - tag: "意向高"
+          keywords: ["要", "买", "去", "来一个", "帮我找", "马上", "现在", "预订", "团购"]
+        - tag: "意向低"
+          keywords: ["看看", "了解", "有没有", "可以吗", "大概", "随便", "问问"]
+
+  # 第二层：知识库增强标签（从商户信息提取）
+  layer_2_knowledge:
+    enabled: true
+    confidence: 0.85
+    categories:
+      商户类型:
+        - tag: "设计师品牌"
+          merchant_keywords: ["设计师", "原创", "定制"]
+        - tag: "手工体验"
+          merchant_keywords: ["手工", "DIY", "体验", "制作"]
+        - tag: "进口商品"
+          merchant_keywords: ["进口", "海外", "跨境", "、代购"]
+        - tag: "连锁品牌"
+          merchant_keywords: ["星巴克", "肯德基", "麦当劳", "优衣库", "万达"]
+        - tag: "本地特色"
+          merchant_keywords: ["本地", "特色", "老字号", "传统"]
+
+  # 第三层：AI智能分析标签（大模型分析）
+  layer_3_ai:
+    enabled: true
+    confidence: 0.7
+    categories:
+      情感倾向:
+        positive: ["开心", "满意", "谢谢", "好", "棒", "喜欢"]
+        negative: ["生气", "不满", "失望", "差", "烂", "垃圾"]
+      消费能力:
+        high: ["高端", "奢侈", "名牌", "限量"]
+        medium: ["适中", "还行", "普通"]
+        low: ["便宜", "优惠", "打折", "省钱"]
+      出行目的:
+        - tag: "家庭出游"
+          indicators: ["孩子", "家人", "一起", "亲子"]
+        - tag: "朋友聚会"
+          indicators: ["朋友", "聚会", "一起", "同事"]
+        - tag: "商务接待"
+          indicators: ["客户", "谈判", "会议", "接待"]
+        - tag: "个人休闲"
+          indicators: ["一个人", "自己", "放松", "休闲"]
+      特殊需求:
+        - tag: "无障碍需求"
+          indicators: ["轮椅", "残疾", "无障碍", "坡道"]
+        - tag: "婴儿车"
+          indicators: ["婴儿车", "宝宝", "小孩", "儿童车"]
+        - tag: "宠物友好"
+          indicators: ["宠物", "狗", "猫", "可以带"]
+        - tag: "素食"
+          indicators: ["素食", "素", " vegetarian"]
+        - tag: "清真"
+          indicators: ["清真", " halal"]
+
+## 数据存储配置
+storage:
+  visitor_profiles: "/data/openclaw/memory/visitors"
+  conversation_logs: "~/.openclaw/workspace/memory"
+  knowledge_base: "~/.openclaw/workspace/MEMORY.md"
+  daily_exports: "/data/openclaw/exports"
+
+## 地图服务配置
+map:
+  provider: "tianditu"
+  # 天地图Key，在 https://console.tianditu.gov.cn/ 免费申请
+  # 演示阶段可暂时留空，上线后填入
+  api_key: "demo_key_replace_before_launch"
+  default_location:
+    # 星汇广场（上海浦东张江）坐标
+    lat: 31.2040
+    lng: 121.6088
+  zoom: 17   # 地图默认缩放级别（17=街道级，适合园区导览）
