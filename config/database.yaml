@@ -1,0 +1,9 @@
+## 数据库配置（OpenClaw P004 Demo - TiDB Cloud）
+
+database:
+  host: "gateway01.ap-northeast-1.prod.aws.tidbcloud.com"
+  port: 4000
+  user: "3fJsHvrGPQgNbTc.root"
+  password: "gN4WE7OaPfs098ua"
+  name: "park_ai"
+  ssl_ca: "/Users/hui/Library/Python/3.9/lib/python/site-packages/certifi/cacert.pem"
