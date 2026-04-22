@@ -1,0 +1,33 @@
+# render.yaml - Flask Backend Deployment
+services:
+  - type: web
+    name: p004-park-ai
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: cd scripts && gunicorn app:app --bind 0.0.0.0:$PORT
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: DATABASE_HOST
+        value: gateway01.ap-northeast-1.prod.aws.tidbcloud.com
+      - key: DATABASE_PORT
+        value: "4000"
+      - key: DATABASE_USER
+        value: 3fJsHvrGPQgNbTc.root
+      - key: DATABASE_PASSWORD
+        value: gN4WE7OaPfs098ua
+      - key: DATABASE_NAME
+        value: park_ai
+      - key: WEWORK_CORP_ID
+        value: ww92e11549c7d2ade0
+      - key: WEWORK_AGENT_ID
+        value: "1000002"
+      - key: WEWORK_APP_SECRET
+        value: EtXiES0PvnHYaVl0UzLQ_OypR_qT7yi9AsuZsFDSx7o
+      - key: WEWORK_CALLBACK_TOKEN
+        value: f252cbb3629d8a8d9c31685ef81acea3
+      - key: WEWORK_CALLBACK_AES_KEY
+        value: lQd1dvA3tiiJmi4s96IkL=uI08M9jiLR2CMUfzKzPji
